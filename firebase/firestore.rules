@@ -1,0 +1,66 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function emailLower() {
+      return request.auth.token.email != null
+        ? request.auth.token.email.toLowerCase()
+        : null;
+    }
+
+    function isBootstrapAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/adminEmails/$(emailLower()));
+    }
+
+    function projectMemberDoc(projectKey) {
+      return /databases/$(database)/documents/projects/$(projectKey)/membersByEmail/$(emailLower());
+    }
+
+    function hasProjectAccess(projectKey) {
+      return isSignedIn() && (
+        exists(projectMemberDoc(projectKey)) || isBootstrapAdmin()
+      );
+    }
+
+    function projectRole(projectKey) {
+      return get(projectMemberDoc(projectKey)).data.role;
+    }
+
+    function canEditTasks(projectKey) {
+      return isBootstrapAdmin() || (
+        hasProjectAccess(projectKey) && (projectRole(projectKey) in ['admin', 'editor'])
+      );
+    }
+
+    function canManageMembers(projectKey) {
+      return isBootstrapAdmin() || (
+        hasProjectAccess(projectKey) && (projectRole(projectKey) == 'admin')
+      );
+    }
+
+    // Bootstrap: define correos admin iniciales (manual). Solo lectura para clientes.
+    match /adminEmails/{email} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    match /projects/{projectKey} {
+      allow read: if hasProjectAccess(projectKey);
+      allow write: if false;
+
+      match /membersByEmail/{email} {
+        allow read: if hasProjectAccess(projectKey);
+        allow create, update, delete: if canManageMembers(projectKey);
+      }
+
+      match /tasks/{taskId} {
+        allow read: if hasProjectAccess(projectKey);
+        allow create, update, delete: if canEditTasks(projectKey);
+      }
+    }
+  }
+}

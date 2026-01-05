@@ -1,0 +1,52 @@
+.app {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.appHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.appMain {
+  display: grid;
+  gap: 24px;
+}
+
+.appFooter {
+  margin-top: 24px;
+  opacity: 0.8;
+}
+
+.error {
+  padding: 12px;
+  border: 1px solid #f2b8b5;
+  background: #fdecea;
+  border-radius: 8px;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+table th,
+table td {
+  border: 1px solid #e5e5e5;
+  padding: 8px;
+  vertical-align: top;
+}
+
+input {
+  max-width: 100%;
+}
+
+/* Mark critical path without introducing new colors: thicker stroke */
+.is-critical .bar {
+  stroke-width: 3px;
+}
