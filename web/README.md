@@ -1,5 +1,13 @@
 ## ANTARFOOD Gantt (GitHub Pages + Firebase)
 
+### Versionado (SemVer) + label en UI
+- La versión vive en `web/package.json` (`version`).
+- La app muestra `vX.Y.Z` en el footer (inyectado al build).
+- Para cada iteración, sube la versión y crea tag (aparece en Git Graph):
+  - `cd web`
+  - `npm version patch` (o `minor` / `major`)
+  - `git push --follow-tags`
+
 ### Requisitos
 - Firebase Auth (Email link) habilitado
 - Firestore habilitado

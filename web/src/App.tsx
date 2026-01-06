@@ -74,7 +74,7 @@ export default function App() {
 
       <footer className="appFooter">
         <small>
-          Rol actual: <strong>{role}</strong> · Acceso privado (login requerido)
+          Versión: <strong>v{__APP_VERSION__}</strong> · Rol actual: <strong>{role}</strong> · Acceso privado (login requerido)
         </small>
       </footer>
     </div>
