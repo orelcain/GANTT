@@ -10,6 +10,7 @@ import { TaskTable } from "./components/TaskTable";
 import { Toolbar } from "./components/Toolbar";
 import { useGanttStore } from "./lib/store";
 import type { Task, UserRole } from "./lib/types";
+import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 
 export default function App() {
   const load = useGanttStore((s) => s.load);
@@ -82,6 +83,51 @@ export default function App() {
     });
   }, [tasks, filterStatus, filterAssignee, filterType, searchQuery]);
 
+  // Atajos de teclado
+  useKeyboardShortcuts([
+    {
+      key: "n",
+      ctrl: true,
+      action: () => {
+        if (canEdit) handleCreateTask();
+      },
+      description: "Nueva tarea",
+    },
+    {
+      key: "m",
+      ctrl: true,
+      action: () => {
+        if (canEdit) handleCreateMilestone();
+      },
+      description: "Nuevo milestone",
+    },
+    {
+      key: "f",
+      ctrl: true,
+      action: () => {
+        // Focus en búsqueda
+        const searchInput = document.querySelector('input[placeholder*="Buscar"]') as HTMLInputElement;
+        searchInput?.focus();
+      },
+      description: "Buscar",
+    },
+    {
+      key: "d",
+      ctrl: true,
+      action: () => {
+        setDarkMode(!darkMode);
+      },
+      description: "Toggle modo oscuro",
+    },
+    {
+      key: "Escape",
+      action: () => {
+        if (taskToEdit) setTaskToEdit(null);
+      },
+      description: "Cerrar modal",
+    },
+  ], role !== "anon" && role !== "noaccess");
+
   const handleCreateTask = async () => {
     const today = new Date().toISOString().split("T")[0];
     const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
@@ -128,7 +174,7 @@ export default function App() {
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <h1>ANTARFOOD · Gantt Mantención (Temporada Baja)</h1>
-              <span className="version-badge">v0.4.0</span>
+              <span className="version-badge">v0.4.1</span>
             </div>
             <p style={{ opacity: 0.8, marginTop: 4 }}>
               Frontend estático (GitHub Pages). Login/roles con Firebase.
