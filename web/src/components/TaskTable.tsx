@@ -81,19 +81,19 @@ export function TaskTable({ tasks, canEdit }: { tasks: Task[]; canEdit: boolean 
   );
 
   return (
-    <div style={{ height: "100%", overflow: "auto", padding: 16 }}>
-      <table style={{ fontSize: 13 }}>
+    <div style={{ height: "100%", overflow: "auto", padding: 12 }}>
+      <table style={{ fontSize: 11, width: "100%" }}>
         <thead>
           <tr>
-            <th style={{ width: 50 }}>Tipo</th>
-            <SortableHeader field="name" style={{ minWidth: 240 }}>Nombre</SortableHeader>
-            <SortableHeader field="start" style={{ width: 90 }}>Inicio</SortableHeader>
-            <SortableHeader field="end" style={{ width: 90 }}>Término</SortableHeader>
-            <SortableHeader field="progress" style={{ width: 140 }}>Progreso</SortableHeader>
-            <SortableHeader field="status" style={{ width: 100 }}>Estado</SortableHeader>
-            <SortableHeader field="assignee" style={{ width: 140 }}>Responsable</SortableHeader>
-            <th style={{ width: 120 }}>Deps</th>
-            {canEdit && <th style={{ width: 80 }} />}
+            <th style={{ width: 35 }}>Tipo</th>
+            <SortableHeader field="name" style={{ minWidth: 180, maxWidth: 280 }}>Nombre</SortableHeader>
+            <SortableHeader field="start" style={{ width: 75 }}>Inicio</SortableHeader>
+            <SortableHeader field="end" style={{ width: 75 }}>Término</SortableHeader>
+            <SortableHeader field="progress" style={{ width: 90 }}>%</SortableHeader>
+            <SortableHeader field="status" style={{ width: 80 }}>Estado</SortableHeader>
+            <SortableHeader field="assignee" style={{ width: 100 }}>Resp.</SortableHeader>
+            <th style={{ width: 80 }}>Deps</th>
+            {canEdit && <th style={{ width: 70 }} />}
           </tr>
         </thead>
         <tbody>
@@ -155,13 +155,13 @@ export function TaskTable({ tasks, canEdit }: { tasks: Task[]; canEdit: boolean 
                   {isMilestone ? (
                     "—"
                   ) : (
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 100 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 4, minWidth: 70 }}>
                       <div
                         style={{
                           flex: 1,
-                          height: 18,
-                          background: "#e1e4e8",
-                          borderRadius: 9,
+                          height: 14,
+                          background: "var(--color-border-light)",
+                          borderRadius: 7,
                           overflow: "hidden",
                           position: "relative",
                         }}
@@ -171,12 +171,12 @@ export function TaskTable({ tasks, canEdit }: { tasks: Task[]; canEdit: boolean 
                             height: "100%",
                             background:
                               t.progress === 100
-                                ? "#36b37e"
+                                ? "var(--color-success)"
                                 : t.progress >= 75
-                                  ? "#4c9aff"
+                                  ? "var(--color-primary)"
                                   : t.progress >= 50
-                                    ? "#ffab00"
-                                    : "#ff5630",
+                                    ? "var(--color-warning)"
+                                    : "var(--color-critical)",
                             width: `${t.progress}%`,
                             transition: "width 0.3s ease",
                           }}
@@ -192,10 +192,10 @@ export function TaskTable({ tasks, canEdit }: { tasks: Task[]; canEdit: boolean 
                             const v = Number(e.target.value);
                             await upsertTask({ ...t, progress: Number.isFinite(v) ? v : t.progress });
                           }}
-                          style={{ width: 45, textAlign: "center", padding: "2px 4px" }}
+                          style={{ width: 38, textAlign: "center", padding: "2px", fontSize: 10 }}
                         />
                       ) : (
-                        <span style={{ fontSize: 11, color: "#5e6c84", minWidth: 35 }}>
+                        <span style={{ fontSize: 10, color: "var(--color-text-muted)", minWidth: 30 }}>
                           {Math.round(t.progress)}%
                         </span>
                       )}
@@ -207,23 +207,23 @@ export function TaskTable({ tasks, canEdit }: { tasks: Task[]; canEdit: boolean 
                   <input
                     value={t.status ?? ""}
                     onChange={async (e) => await upsertTask({ ...t, status: e.target.value })}
-                    style={{ width: 90 }}
+                    style={{ width: 75, fontSize: 10, padding: "2px 4px" }}
                   />
                 ) : (
                   <span
                     style={{
-                      padding: "2px 8px",
-                      borderRadius: 4,
-                      fontSize: 12,
-                      background: "#f6f8fa",
-                      border: "1px solid #e1e4e8",
+                      padding: "1px 6px",
+                      borderRadius: 3,
+                      fontSize: 10,
+                      background: "var(--color-bg)",
+                      border: "1px solid var(--color-border)",
                     }}
                   >
                     {t.status || "—"}
                   </span>
                 )}
               </td>
-              <td>{t.assignee ?? "—"}</td>
+              <td style={{ fontSize: 10 }}>{t.assignee ?? "—"}</td>
               <td>
                 {canEdit ? (
                   <input
@@ -231,11 +231,11 @@ export function TaskTable({ tasks, canEdit }: { tasks: Task[]; canEdit: boolean 
                     onChange={async (e) =>
                       await upsertTask({ ...t, dependencies: parseDeps(e.target.value) })
                     }
-                    style={{ width: 100 }}
-                    placeholder="1,2,3"
+                    style={{ width: 75, fontSize: 10, padding: "2px 4px" }}
+                    placeholder="1,2"
                   />
                 ) : (
-                  t.dependencies.join(",") || "—"
+                  <span style={{ fontSize: 10 }}>{t.dependencies.join(",") || "—"}</span>
                 )}
               </td>
               {canEdit && (
@@ -245,13 +245,13 @@ export function TaskTable({ tasks, canEdit }: { tasks: Task[]; canEdit: boolean 
                       if (!confirm(`¿Eliminar "${t.name}"?`)) return;
                       await deleteTask(t.id);
                     }}
-                    style={{ fontSize: 12 }}
+                    style={{ fontSize: 10, padding: "2px 6px" }}
                   >
-                    Eliminar
+                    ✕
                   </button>
                 </td>
               )}
-              </tr>
+            </tr>
             );
           })}
         </tbody>

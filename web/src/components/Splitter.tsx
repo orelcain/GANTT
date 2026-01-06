@@ -12,9 +12,9 @@ type Props = {
 export function Splitter({
   leftPanel,
   rightPanel,
-  defaultSplitPosition = 45,
-  minLeftWidth = 300,
-  minRightWidth = 400,
+  defaultSplitPosition = 35,
+  minLeftWidth = 280,
+  minRightWidth = 350,
   storageKey = "gantt-splitter-position",
 }: Props) {
   const [splitPosition, setSplitPosition] = useState(() => {

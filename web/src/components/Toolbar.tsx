@@ -1,5 +1,7 @@
 import { ImportExcel } from "./ImportExcel";
 import { MembersAdmin } from "./MembersAdmin";
+import { ExportMenu } from "./ExportMenu";
+import type { Task } from "../lib/types";
 
 type ViewMode = "Day" | "Week" | "Month";
 
@@ -23,6 +25,7 @@ type Props = {
   uniqueAssignees?: string[];
   searchQuery?: string;
   onSearchChange?: (query: string) => void;
+  tasks?: Task[];
 };
 
 export function Toolbar({
@@ -44,6 +47,7 @@ export function Toolbar({
   uniqueStatuses = [],
   uniqueAssignees = [],
   searchQuery = "",
+  tasks = [],
   onSearchChange,
 }: Props) {
   const hasActiveFilters = filterStatus || filterAssignee || filterType || searchQuery;
@@ -165,7 +169,8 @@ export function Toolbar({
       <span style={{ fontSize: 11, color: "var(--color-text-muted)" }}>
         {taskCount} {taskCount === 1 ? "tarea" : "tareas"}
       </span>
-
+<ExportMenu tasks={tasks} />
+      
       {canEdit && <ImportExcel />}
       {canManageUsers && <MembersAdmin enabled />}
     </div>

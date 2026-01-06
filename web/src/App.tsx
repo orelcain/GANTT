@@ -128,7 +128,7 @@ export default function App() {
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <h1>ANTARFOOD · Gantt Mantención (Temporada Baja)</h1>
-              <span className="version-badge">v0.3.3</span>
+              <span className="version-badge">v0.4.0</span>
             </div>
             <p style={{ opacity: 0.8, marginTop: 4 }}>
               Frontend estático (GitHub Pages). Login/roles con Firebase.
@@ -187,6 +187,7 @@ export default function App() {
             onFilterTypeChange={setFilterType}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
+            tasks={filteredTasks}
           />
           <main className="appMain">
             {isLoading ? (
