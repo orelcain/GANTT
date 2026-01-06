@@ -31,6 +31,7 @@ export default function App() {
   const [filterStatus, setFilterStatus] = useState("");
   const [filterAssignee, setFilterAssignee] = useState("");
   const [filterType, setFilterType] = useState<"" | "task" | "milestone">("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     if (role === "anon" || role === "noaccess") return;
@@ -68,9 +69,18 @@ export default function App() {
       if (filterStatus && task.status !== filterStatus) return false;
       if (filterAssignee && task.assignee !== filterAssignee) return false;
       if (filterType && task.type !== filterType) return false;
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        return (
+          task.name.toLowerCase().includes(query) ||
+          task.assignee?.toLowerCase().includes(query) ||
+          task.status?.toLowerCase().includes(query) ||
+          String(task.phaseId || "").toLowerCase().includes(query)
+        );
+      }
       return true;
     });
-  }, [tasks, filterStatus, filterAssignee, filterType]);
+  }, [tasks, filterStatus, filterAssignee, filterType, searchQuery]);
 
   const handleCreateTask = async () => {
     const today = new Date().toISOString().split("T")[0];
@@ -118,7 +128,7 @@ export default function App() {
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <h1>ANTARFOOD · Gantt Mantención (Temporada Baja)</h1>
-              <span className="version-badge">v0.3.0</span>
+              <span className="version-badge">v0.3.2</span>
             </div>
             <p style={{ opacity: 0.8, marginTop: 4 }}>
               Frontend estático (GitHub Pages). Login/roles con Firebase.
@@ -175,6 +185,8 @@ export default function App() {
             onFilterStatusChange={setFilterStatus}
             onFilterAssigneeChange={setFilterAssignee}
             onFilterTypeChange={setFilterType}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
           />
           <main className="appMain">
             {isLoading ? (

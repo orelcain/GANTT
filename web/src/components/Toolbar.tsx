@@ -21,6 +21,8 @@ type Props = {
   onFilterTypeChange?: (type: "" | "task" | "milestone") => void;
   uniqueStatuses?: string[];
   uniqueAssignees?: string[];
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
 };
 
 export function Toolbar({
@@ -41,8 +43,10 @@ export function Toolbar({
   onFilterTypeChange,
   uniqueStatuses = [],
   uniqueAssignees = [],
+  searchQuery = "",
+  onSearchChange,
 }: Props) {
-  const hasActiveFilters = filterStatus || filterAssignee || filterType;
+  const hasActiveFilters = filterStatus || filterAssignee || filterType || searchQuery;
 
   return (
     <div className="appToolbar">
@@ -130,12 +134,23 @@ export function Toolbar({
           </select>
         )}
 
+        {onSearchChange && (
+          <input
+            type="text"
+            placeholder="🔍 Buscar tareas..."
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            style={{ fontSize: 12, minWidth: 180, padding: "3px 8px" }}
+          />
+        )}
+
         {hasActiveFilters && (
           <button
             onClick={() => {
               onFilterTypeChange?.("");
               onFilterStatusChange?.("");
               onFilterAssigneeChange?.("");
+              onSearchChange?.("");
             }}
             style={{ fontSize: 11, padding: "3px 8px" }}
             title="Limpiar filtros"
@@ -147,7 +162,7 @@ export function Toolbar({
 
       <div style={{ flex: 1 }} />
 
-      <span style={{ fontSize: 13, color: "#586069" }}>
+      <span style={{ fontSize: 11, color: "var(--color-text-muted)" }}>
         {taskCount} {taskCount === 1 ? "tarea" : "tareas"}
       </span>
 
