@@ -3,10 +3,13 @@
 ### Versionado (SemVer) + label en UI
 - La versión vive en `web/package.json` (`version`).
 - La app muestra `vX.Y.Z` en el footer (inyectado al build).
-- Para cada iteración, sube la versión y crea tag (aparece en Git Graph):
+- Para que en Git Graph se vea: **versión primero** y luego un resumen simple, usa los comandos release:
   - `cd web`
-  - `npm version patch` (o `minor` / `major`)
+  - `npm run release:patch -- "resumen corto"` (o `release:minor` / `release:major`)
   - `git push --follow-tags`
+
+Formato resultante del commit/tag:
+- `v0.0.1 - resumen corto`
 
 ### Requisitos
 - Firebase Auth (Email link) habilitado
