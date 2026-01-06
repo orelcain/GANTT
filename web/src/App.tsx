@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AuthBar } from "./components/AuthBar";
 import { GanttView, type ViewMode } from "./components/GanttView";
 import { QuickEditModal } from "./components/QuickEditModal";
+import { Splitter } from "./components/Splitter";
 import { TaskTable } from "./components/TaskTable";
 import { Toolbar } from "./components/Toolbar";
 import { useGanttStore } from "./lib/store";
@@ -21,6 +22,11 @@ export default function App() {
   const [viewMode, setViewMode] = useState<ViewMode>("Day");
   const [showCriticalPath, setShowCriticalPath] = useState(true);
   const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
+  
+  // Filtros
+  const [filterStatus, setFilterStatus] = useState("");
+  const [filterAssignee, setFilterAssignee] = useState("");
+  const [filterType, setFilterType] = useState<"" | "task" | "milestone">("");
 
   useEffect(() => {
     if (role === "anon" || role === "noaccess") return;
@@ -29,6 +35,29 @@ export default function App() {
 
   const canEdit = useMemo(() => role === "admin" || role === "editor", [role]);
   const canManageUsers = useMemo(() => role === "admin", [role]);
+
+  // Valores únicos para los filtros
+  const uniqueStatuses = useMemo(() => {
+    const statuses = new Set<string>();
+    tasks.forEach(t => t.status && statuses.add(t.status));
+    return Array.from(statuses).sort();
+  }, [tasks]);
+
+  const uniqueAssignees = useMemo(() => {
+    const assignees = new Set<string>();
+    tasks.forEach(t => t.assignee && assignees.add(t.assignee));
+    return Array.from(assignees).sort();
+  }, [tasks]);
+
+  // Tareas filtradas
+  const filteredTasks = useMemo(() => {
+    return tasks.filter(task => {
+      if (filterStatus && task.status !== filterStatus) return false;
+      if (filterAssignee && task.assignee !== filterAssignee) return false;
+      if (filterType && task.type !== filterType) return false;
+      return true;
+    });
+  }, [tasks, filterStatus, filterAssignee, filterType]);
 
   const handleCreateTask = async () => {
     const today = new Date().toISOString().split("T")[0];
@@ -111,6 +140,14 @@ export default function App() {
             taskCount={tasks.length}
             onCreateTask={canEdit ? handleCreateTask : undefined}
             onCreateMilestone={canEdit ? handleCreateMilestone : undefined}
+            filterStatus={filterStatus}
+            filterAssignee={filterAssignee}
+            filterType={filterType}
+            uniqueStatuses={uniqueStatuses}
+            uniqueAssignees={uniqueAssignees}
+            onFilterStatusChange={setFilterStatus}
+            onFilterAssigneeChange={setFilterAssignee}
+            onFilterTypeChange={setFilterType}
           />
           <main className="appMain">
             {isLoading ? (
@@ -123,13 +160,11 @@ export default function App() {
                 <p>{canEdit ? "Importa el archivo Excel para comenzar." : "El proyecto está vacío."}</p>
               </div>
             ) : (
-              <div className="splitView">
-                <div className="tablePanel">
-                  <TaskTable tasks={tasks} canEdit={canEdit} />
-                </div>
-                <div className="ganttPanel">
+              <Splitter
+                leftPanel={<TaskTable tasks={filteredTasks} canEdit={canEdit} />}
+                rightPanel={
                   <GanttView
-                    tasks={tasks}
+                    tasks={filteredTasks}
                     viewMode={viewMode}
                     showCriticalPath={showCriticalPath}
                     onTaskChange={canEdit ? async (task, changes) => {
@@ -137,8 +172,12 @@ export default function App() {
                     } : undefined}
                     onTaskClick={canEdit ? (task) => setTaskToEdit(task) : undefined}
                   />
-                </div>
-              </div>
+                }
+                defaultSplitPosition={45}
+                minLeftWidth={320}
+                minRightWidth={400}
+                storageKey="gantt-split-position"
+              />
             )}
           </main>
         </>

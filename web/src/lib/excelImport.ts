@@ -111,6 +111,50 @@ export async function importFromExcel(file: File): Promise<Task[]> {
 
   if (!tasks.length) throw new Error("No se encontraron tareas importables en 'Gantt_Helper'.");
 
+  // Detectar jerarquía automáticamente
+  // Estrategia: usar phaseId como indicador de agrupación
+  const phaseMap = new Map<string | number, string>(); // phaseId -> first task id with that phase
+  const tasksByPhase = new Map<string | number, Task[]>();
+
+  tasks.forEach((task) => {
+    if (task.phaseId != null) {
+      const key = String(task.phaseId);
+      if (!phaseMap.has(key)) {
+        phaseMap.set(key, task.id);
+      }
+      if (!tasksByPhase.has(key)) {
+        tasksByPhase.set(key, []);
+      }
+      tasksByPhase.get(key)!.push(task);
+    }
+  });
+
+  // Asignar parentId y levels
+  tasks.forEach((task) => {
+    if (task.phaseId != null) {
+      const key = String(task.phaseId);
+      const phaseFirstTaskId = phaseMap.get(key);
+      
+      if (phaseFirstTaskId === task.id) {
+        // Esta es la primera tarea de la fase = tarea padre
+        task.level = 0;
+        task.parentId = null;
+      } else {
+        // Es una subtarea de la fase
+        task.level = 1;
+        task.parentId = phaseFirstTaskId || null;
+      }
+    } else {
+      // Sin phase = root task
+      task.level = 0;
+      task.parentId = null;
+    }
+
+    // Inicializar type y collapsed
+    task.type = task.type || "task";
+    task.collapsed = false;
+  });
+
   // De-dupe by id just in case
   const seen = new Set<string>();
   return tasks.filter((t) => (seen.has(t.id) ? false : (seen.add(t.id), true)));
