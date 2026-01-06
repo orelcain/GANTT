@@ -25,13 +25,22 @@ export function GanttView({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const ganttInstanceRef = useRef<any>(null);
 
-  const { criticalIds, hasCycle } = useMemo(() => computeCriticalPath(tasks), [tasks]);
+  // Filtrar tareas visibles (excluir hijos de padres colapsados)
+  const visibleTasks = useMemo(() => {
+    return tasks.filter((t) => {
+      if (!t.parentId) return true; // Root tasks siempre visibles
+      const parent = tasks.find((p) => p.id === t.parentId);
+      return !parent?.collapsed; // Mostrar solo si padre no está colapsado
+    });
+  }, [tasks]);
+
+  const { criticalIds, hasCycle } = useMemo(() => computeCriticalPath(visibleTasks), [visibleTasks]);
 
   useEffect(() => {
     if (!containerRef.current) return;
     containerRef.current.innerHTML = "";
 
-    const data = tasks.map((t) => {
+    const data = visibleTasks.map((t) => {
       const isMilestone = t.type === "milestone";
       let customClass = "";
       
@@ -65,7 +74,7 @@ export function GanttView({
       
       // Tooltips personalizados
       custom_popup_html: (task: any) => {
-        const originalTask = tasks.find((t) => t.id === task.id);
+        const originalTask = visibleTasks.find((t) => t.id === task.id);
         if (!originalTask) return task.name;
         
         const isMilestone = originalTask.type === "milestone";
@@ -89,7 +98,7 @@ export function GanttView({
 
       // Drag & drop para cambiar fechas
       on_date_change: (task: any, start: Date, end: Date) => {
-        const originalTask = tasks.find((t) => t.id === task.id);
+        const originalTask = visibleTasks.find((t) => t.id === task.id);
         if (!originalTask || !onTaskChange) return;
 
         const startStr = start.toISOString().split("T")[0];
@@ -100,7 +109,7 @@ export function GanttView({
 
       // Drag vertical para cambiar progreso
       on_progress_change: (task: any, progress: number) => {
-        const originalTask = tasks.find((t) => t.id === task.id);
+        const originalTask = visibleTasks.find((t) => t.id === task.id);
         if (!originalTask || !onTaskChange || originalTask.type === "milestone") return;
 
         onTaskChange(originalTask, { progress });
@@ -108,7 +117,7 @@ export function GanttView({
 
       // Click en barra
       on_click: (task: any) => {
-        const originalTask = tasks.find((t) => t.id === task.id);
+        const originalTask = visibleTasks.find((t) => t.id === task.id);
         if (!originalTask || !onTaskClick) return;
 
         onTaskClick(originalTask);
@@ -116,7 +125,7 @@ export function GanttView({
     });
 
     ganttInstanceRef.current = gantt;
-  }, [tasks, viewMode, showCriticalPath, criticalIds, onTaskChange, onTaskClick]);
+  }, [visibleTasks, viewMode, showCriticalPath, criticalIds, onTaskChange, onTaskClick]);
 
   return (
     <div style={{ padding: 16, overflow: "auto" }}>

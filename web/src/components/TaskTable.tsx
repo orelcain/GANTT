@@ -14,6 +14,18 @@ export function TaskTable({ tasks, canEdit }: { tasks: Task[]; canEdit: boolean 
   const upsertTask = useGanttStore((s) => s.upsertTask);
   const deleteTask = useGanttStore((s) => s.deleteTask);
 
+  // Determinar qué tareas tienen hijos
+  const tasksWithChildren = new Set(
+    tasks.filter((t) => t.parentId).map((t) => t.parentId).filter(Boolean)
+  );
+
+  // Filtrar tareas visibles (ocultar hijos si padre está colapsado)
+  const visibleTasks = tasks.filter((t) => {
+    if (!t.parentId) return true; // Root tasks siempre visibles
+    const parent = tasks.find((p) => p.id === t.parentId);
+    return !parent?.collapsed; // Mostrar solo si padre no está colapsado
+  });
+
   return (
     <div style={{ height: "100%", overflow: "auto", padding: 16 }}>
       <table style={{ fontSize: 13 }}>
@@ -23,7 +35,7 @@ export function TaskTable({ tasks, canEdit }: { tasks: Task[]; canEdit: boolean 
             <th style={{ minWidth: 240 }}>Nombre</th>
             <th style={{ width: 90 }}>Inicio</th>
             <th style={{ width: 90 }}>Término</th>
-            <th style={{ width: 60 }}>%</th>
+            <th style={{ width: 140 }}>Progreso</th>
             <th style={{ width: 100 }}>Estado</th>
             <th style={{ width: 140 }}>Responsable</th>
             <th style={{ width: 120 }}>Deps</th>
@@ -31,9 +43,10 @@ export function TaskTable({ tasks, canEdit }: { tasks: Task[]; canEdit: boolean 
           </tr>
         </thead>
         <tbody>
-          {tasks.map((t) => {
+          {visibleTasks.map((t) => {
             const level = t.level ?? 0;
             const isMilestone = t.type === "milestone";
+            const hasChildren = tasksWithChildren.has(t.id);
             const icon = isMilestone ? "◆" : "▪";
             
             return (
@@ -50,10 +63,35 @@ export function TaskTable({ tasks, canEdit }: { tasks: Task[]; canEdit: boolean 
                       paddingLeft: level * 20,
                       display: "flex",
                       alignItems: "center",
-                      gap: 4,
+                      gap: 6,
                     }}
                   >
-                    {level > 0 && <span style={{ opacity: 0.4 }}>└</span>}
+                    {hasChildren && (
+                      <button
+                        onClick={async () => {
+                          await upsertTask({ ...t, collapsed: !t.collapsed });
+                        }}
+                        style={{
+                          padding: "0",
+                          width: 16,
+                          height: 16,
+                          border: "none",
+                          background: "transparent",
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: 10,
+                          color: "#5e6c84",
+                        }}
+                        title={t.collapsed ? "Expandir" : "Colapsar"}
+                      >
+                        {t.collapsed ? "▶" : "▼"}
+                      </button>
+                    )}
+                    {level > 0 && !hasChildren && (
+                      <span style={{ opacity: 0.4, marginLeft: hasChildren ? 0 : 16 }}>└</span>
+                    )}
                     {t.name}
                   </div>
                 </td>
@@ -62,20 +100,52 @@ export function TaskTable({ tasks, canEdit }: { tasks: Task[]; canEdit: boolean 
                 <td>
                   {isMilestone ? (
                     "—"
-                  ) : canEdit ? (
-                    <input
-                      type="number"
-                      min={0}
-                      max={100}
-                      value={t.progress}
-                      onChange={async (e: ChangeEvent<HTMLInputElement>) => {
-                        const v = Number(e.target.value);
-                        await upsertTask({ ...t, progress: Number.isFinite(v) ? v : t.progress });
-                      }}
-                      style={{ width: 50 }}
-                    />
                   ) : (
-                    `${Math.round(t.progress)}%`
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 100 }}>
+                      <div
+                        style={{
+                          flex: 1,
+                          height: 18,
+                          background: "#e1e4e8",
+                          borderRadius: 9,
+                          overflow: "hidden",
+                          position: "relative",
+                        }}
+                      >
+                        <div
+                          style={{
+                            height: "100%",
+                            background:
+                              t.progress === 100
+                                ? "#36b37e"
+                                : t.progress >= 75
+                                  ? "#4c9aff"
+                                  : t.progress >= 50
+                                    ? "#ffab00"
+                                    : "#ff5630",
+                            width: `${t.progress}%`,
+                            transition: "width 0.3s ease",
+                          }}
+                        />
+                      </div>
+                      {canEdit ? (
+                        <input
+                          type="number"
+                          min={0}
+                          max={100}
+                          value={Math.round(t.progress)}
+                          onChange={async (e: ChangeEvent<HTMLInputElement>) => {
+                            const v = Number(e.target.value);
+                            await upsertTask({ ...t, progress: Number.isFinite(v) ? v : t.progress });
+                          }}
+                          style={{ width: 45, textAlign: "center", padding: "2px 4px" }}
+                        />
+                      ) : (
+                        <span style={{ fontSize: 11, color: "#5e6c84", minWidth: 35 }}>
+                          {Math.round(t.progress)}%
+                        </span>
+                      )}
+                    </div>
                   )}
                 </td>
               <td>
