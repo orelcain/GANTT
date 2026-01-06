@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { importFromExcel } from "../lib/excelImport";
 import { useGanttStore } from "../lib/store";
@@ -7,19 +7,24 @@ export function ImportExcel() {
   const replaceAll = useGanttStore((s) => s.replaceAll);
   const [isImporting, setIsImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <section>
-      <h2>Importar Excel</h2>
-      <p style={{ maxWidth: 900 }}>
-        Sube el archivo <strong>.xlsm</strong> para importar las tareas desde la hoja
-        <strong> Gantt_Helper</strong>. (Tip: si cambiaste el Excel, guárdalo antes para
-        que queden cálculos actualizados.)
-      </p>
+    <>
+      <button
+        onClick={() => inputRef.current?.click()}
+        disabled={isImporting}
+        className="primary"
+        title="Importar tareas desde Excel"
+      >
+        {isImporting ? "Importando..." : "Importar Excel"}
+      </button>
 
       <input
+        ref={inputRef}
         type="file"
         accept=".xlsx,.xlsm,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        style={{ display: "none" }}
         disabled={isImporting}
         onChange={async (e) => {
           const file = e.target.files?.[0];
@@ -30,8 +35,10 @@ export function ImportExcel() {
           try {
             const tasks = await importFromExcel(file);
             await replaceAll(tasks);
+            alert(`Importadas ${tasks.length} tareas correctamente.`);
           } catch (err) {
             setError(String(err));
+            alert(`Error: ${String(err)}`);
           } finally {
             setIsImporting(false);
             e.target.value = "";
@@ -39,12 +46,11 @@ export function ImportExcel() {
         }}
       />
 
-      {isImporting && <p>Importando…</p>}
       {error && (
-        <p style={{ color: "crimson" }}>
+        <div style={{ position: "fixed", bottom: 24, right: 24, background: "#fff5f5", padding: 12, borderRadius: 8, border: "1px solid #d73a49", maxWidth: 400 }}>
           <strong>Error:</strong> {error}
-        </p>
+        </div>
       )}
-    </section>
+    </>
   );
 }

@@ -15,89 +15,98 @@ export function TaskTable({ tasks, canEdit }: { tasks: Task[]; canEdit: boolean 
   const deleteTask = useGanttStore((s) => s.deleteTask);
 
   return (
-    <section>
-      <h2>Tareas</h2>
-      <div style={{ overflowX: "auto" }}>
-        <table>
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Inicio</th>
-              <th>Término</th>
-              <th>%</th>
-              <th>Estado</th>
-              <th>Responsable</th>
-              <th>Deps (IDs)</th>
-              {canEdit && <th />}
-            </tr>
-          </thead>
-          <tbody>
-            {tasks.map((t) => (
-              <tr key={t.id}>
-                <td style={{ minWidth: 260 }}>{t.name}</td>
-                <td>{t.start}</td>
-                <td>{t.end}</td>
-                <td>
-                  {canEdit ? (
-                    <input
-                      type="number"
-                      min={0}
-                      max={100}
-                      value={t.progress}
-                      onChange={async (e: ChangeEvent<HTMLInputElement>) => {
-                        const v = Number(e.target.value);
-                        await upsertTask({ ...t, progress: Number.isFinite(v) ? v : t.progress });
-                      }}
-                      style={{ width: 70 }}
-                    />
-                  ) : (
-                    Math.round(t.progress)
-                  )}
-                </td>
-                <td>
-                  {canEdit ? (
-                    <input
-                      value={t.status ?? ""}
-                      onChange={async (e) => await upsertTask({ ...t, status: e.target.value })}
-                    />
-                  ) : (
-                    t.status ?? ""
-                  )}
-                </td>
-                <td>{t.assignee ?? ""}</td>
-                <td style={{ minWidth: 240 }}>
-                  {canEdit ? (
-                    <input
-                      value={t.dependencies.join(",")}
-                      onChange={async (e) =>
-                        await upsertTask({ ...t, dependencies: parseDeps(e.target.value) })
-                      }
-                    />
-                  ) : (
-                    t.dependencies.join(",")
-                  )}
-                </td>
-                {canEdit && (
-                  <td>
-                    <button
-                      onClick={async () => {
-                        if (!confirm("¿Eliminar tarea?")) return;
-                        await deleteTask(t.id);
-                      }}
-                    >
-                      Eliminar
-                    </button>
-                  </td>
+    <div style={{ height: "100%", overflow: "auto", padding: 16 }}>
+      <table style={{ fontSize: 13 }}>
+        <thead>
+          <tr>
+            <th style={{ minWidth: 240 }}>Nombre</th>
+            <th style={{ width: 90 }}>Inicio</th>
+            <th style={{ width: 90 }}>Término</th>
+            <th style={{ width: 60 }}>%</th>
+            <th style={{ width: 100 }}>Estado</th>
+            <th style={{ width: 140 }}>Responsable</th>
+            <th style={{ width: 120 }}>Deps</th>
+            {canEdit && <th style={{ width: 80 }} />}
+          </tr>
+        </thead>
+        <tbody>
+          {tasks.map((t) => (
+            <tr key={t.id}>
+              <td>
+                <div style={{ fontWeight: 500 }}>{t.name}</div>
+              </td>
+              <td>{t.start}</td>
+              <td>{t.end}</td>
+              <td>
+                {canEdit ? (
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={t.progress}
+                    onChange={async (e: ChangeEvent<HTMLInputElement>) => {
+                      const v = Number(e.target.value);
+                      await upsertTask({ ...t, progress: Number.isFinite(v) ? v : t.progress });
+                    }}
+                    style={{ width: 50 }}
+                  />
+                ) : (
+                  `${Math.round(t.progress)}%`
                 )}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <p style={{ opacity: 0.8, maxWidth: 900 }}>
-        Nota: las dependencias se escriben como IDs separados por coma. Luego el Gantt dibuja las
-        flechas. (En el siguiente paso podemos agregar UI más amigable para linkear tareas.)
-      </p>
-    </section>
+              </td>
+              <td>
+                {canEdit ? (
+                  <input
+                    value={t.status ?? ""}
+                    onChange={async (e) => await upsertTask({ ...t, status: e.target.value })}
+                    style={{ width: 90 }}
+                  />
+                ) : (
+                  <span
+                    style={{
+                      padding: "2px 8px",
+                      borderRadius: 4,
+                      fontSize: 12,
+                      background: "#f6f8fa",
+                      border: "1px solid #e1e4e8",
+                    }}
+                  >
+                    {t.status || "—"}
+                  </span>
+                )}
+              </td>
+              <td>{t.assignee ?? "—"}</td>
+              <td>
+                {canEdit ? (
+                  <input
+                    value={t.dependencies.join(",")}
+                    onChange={async (e) =>
+                      await upsertTask({ ...t, dependencies: parseDeps(e.target.value) })
+                    }
+                    style={{ width: 100 }}
+                    placeholder="1,2,3"
+                  />
+                ) : (
+                  t.dependencies.join(",") || "—"
+                )}
+              </td>
+              {canEdit && (
+                <td>
+                  <button
+                    onClick={async () => {
+                      if (!confirm(`¿Eliminar "${t.name}"?`)) return;
+                      await deleteTask(t.id);
+                    }}
+                    style={{ fontSize: 12 }}
+                  >
+                    Eliminar
+                  </button>
+                </td>
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }

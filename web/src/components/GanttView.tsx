@@ -5,11 +5,15 @@ import Gantt from "frappe-gantt";
 import { computeCriticalPath } from "../lib/criticalPath";
 import type { Task } from "../lib/types";
 
+export type ViewMode = "Day" | "Week" | "Month";
+
 type Props = {
   tasks: Task[];
+  viewMode?: ViewMode;
+  showCriticalPath?: boolean;
 };
 
-export function GanttView({ tasks }: Props) {
+export function GanttView({ tasks, viewMode = "Day", showCriticalPath = false }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const { criticalIds, hasCycle } = useMemo(() => computeCriticalPath(tasks), [tasks]);
@@ -25,25 +29,24 @@ export function GanttView({ tasks }: Props) {
       end: t.end,
       progress: t.progress,
       dependencies: t.dependencies.join(","),
-      custom_class: criticalIds.has(t.id) ? "is-critical" : "",
+      custom_class: showCriticalPath && criticalIds.has(t.id) ? "is-critical" : "",
     }));
 
     // eslint-disable-next-line no-new
     new Gantt(containerRef.current, data, {
-      view_mode: "Day",
+      view_mode: viewMode,
       language: "es",
     });
-  }, [tasks, criticalIds]);
+  }, [tasks, viewMode, showCriticalPath, criticalIds]);
 
   return (
-    <section>
-      <h2>Gantt</h2>
+    <div style={{ padding: 16, overflow: "auto" }}>
       {hasCycle && (
-        <p style={{ color: "crimson" }}>
-          Hay un ciclo en las dependencias (ruta crítica no disponible).
+        <p style={{ color: "#d73a49", marginBottom: 12, fontSize: 14 }}>
+          ⚠ Hay un ciclo en las dependencias (ruta crítica no disponible).
         </p>
       )}
       <div ref={containerRef} />
-    </section>
+    </div>
   );
 }
