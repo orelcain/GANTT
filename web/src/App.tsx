@@ -4,20 +4,23 @@ import { useEffect, useMemo, useState } from "react";
 
 import { AuthBar } from "./components/AuthBar";
 import { GanttView, type ViewMode } from "./components/GanttView";
+import { QuickEditModal } from "./components/QuickEditModal";
 import { TaskTable } from "./components/TaskTable";
 import { Toolbar } from "./components/Toolbar";
 import { useGanttStore } from "./lib/store";
-import type { UserRole } from "./lib/types";
+import type { Task, UserRole } from "./lib/types";
 
 export default function App() {
   const load = useGanttStore((s) => s.load);
   const tasks = useGanttStore((s) => s.tasks);
   const isLoading = useGanttStore((s) => s.isLoading);
   const error = useGanttStore((s) => s.error);
+  const upsertTask = useGanttStore((s) => s.upsertTask);
 
   const [role, setRole] = useState<UserRole>("anon");
   const [viewMode, setViewMode] = useState<ViewMode>("Day");
   const [showCriticalPath, setShowCriticalPath] = useState(true);
+  const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
 
   useEffect(() => {
     if (role === "anon" || role === "noaccess") return;
@@ -26,6 +29,45 @@ export default function App() {
 
   const canEdit = useMemo(() => role === "admin" || role === "editor", [role]);
   const canManageUsers = useMemo(() => role === "admin", [role]);
+
+  const handleCreateTask = async () => {
+    const today = new Date().toISOString().split("T")[0];
+    const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
+    const maxId = tasks.reduce((max, t) => Math.max(max, Number(t.id) || 0), 0);
+    
+    const newTask: Task = {
+      id: String(maxId + 1),
+      name: "Nueva tarea",
+      start: today,
+      end: tomorrow,
+      progress: 0,
+      dependencies: [],
+      type: "task",
+      level: 0,
+    };
+
+    await upsertTask(newTask);
+    setTaskToEdit(newTask);
+  };
+
+  const handleCreateMilestone = async () => {
+    const today = new Date().toISOString().split("T")[0];
+    const maxId = tasks.reduce((max, t) => Math.max(max, Number(t.id) || 0), 0);
+    
+    const newMilestone: Task = {
+      id: String(maxId + 1),
+      name: "Nuevo milestone",
+      start: today,
+      end: today,
+      progress: 100,
+      dependencies: [],
+      type: "milestone",
+      level: 0,
+    };
+
+    await upsertTask(newMilestone);
+    setTaskToEdit(newMilestone);
+  };
 
   return (
     <div className="app">
@@ -67,6 +109,8 @@ export default function App() {
             showCriticalPath={showCriticalPath}
             onToggleCriticalPath={() => setShowCriticalPath(!showCriticalPath)}
             taskCount={tasks.length}
+            onCreateTask={canEdit ? handleCreateTask : undefined}
+            onCreateMilestone={canEdit ? handleCreateMilestone : undefined}
           />
           <main className="appMain">
             {isLoading ? (
@@ -88,12 +132,26 @@ export default function App() {
                     tasks={tasks}
                     viewMode={viewMode}
                     showCriticalPath={showCriticalPath}
+                    onTaskChange={canEdit ? async (task, changes) => {
+                      await upsertTask({ ...task, ...changes });
+                    } : undefined}
+                    onTaskClick={canEdit ? (task) => setTaskToEdit(task) : undefined}
                   />
                 </div>
               </div>
             )}
           </main>
         </>
+      )}
+
+      {taskToEdit && (
+        <QuickEditModal
+          task={taskToEdit}
+          onSave={async (updates) => {
+            await upsertTask({ ...taskToEdit, ...updates });
+          }}
+          onClose={() => setTaskToEdit(null)}
+        />
       )}
 
       <footer className="appFooter">

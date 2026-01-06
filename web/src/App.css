@@ -197,3 +197,41 @@ button.primary:hover {
   fill: var(--color-critical) !important;
   opacity: 0.9;
 }
+
+/* Milestones como diamantes */
+.milestone .bar {
+  transform: rotate(45deg);
+  transform-origin: center;
+  rx: 0 !important;
+  ry: 0 !important;
+}
+
+.milestone .bar-progress {
+  display: none;
+}
+
+.milestone .bar-label {
+  transform: rotate(-45deg);
+  font-size: 11px;
+}
+
+/* Colores personalizados */
+.custom-color .bar {
+  fill: attr(data-color) !important;
+}
+
+/* Tooltips mejorados */
+.gantt-container .popup-wrapper {
+  background: white;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 0;
+  overflow: hidden;
+}
+
+.gantt-container .pointer {
+  fill: white;
+  stroke: var(--color-border);
+}
+

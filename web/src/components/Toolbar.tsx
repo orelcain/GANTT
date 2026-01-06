@@ -11,6 +11,8 @@ type Props = {
   showCriticalPath: boolean;
   onToggleCriticalPath: () => void;
   taskCount: number;
+  onCreateTask?: () => void;
+  onCreateMilestone?: () => void;
 };
 
 export function Toolbar({
@@ -21,10 +23,26 @@ export function Toolbar({
   showCriticalPath,
   onToggleCriticalPath,
   taskCount,
+  onCreateTask,
+  onCreateMilestone,
 }: Props) {
   return (
     <div className="appToolbar">
       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        {canEdit && onCreateTask && (
+          <>
+            <button onClick={onCreateTask} title="Crear nueva tarea">
+              + Tarea
+            </button>
+            {onCreateMilestone && (
+              <button onClick={onCreateMilestone} title="Crear milestone">
+                ◆ Milestone
+              </button>
+            )}
+            <div style={{ width: 1, height: 24, background: "#e1e4e8", margin: "0 4px" }} />
+          </>
+        )}
+        
         <span style={{ fontSize: 13, color: "#586069" }}>Vista:</span>
         <select value={viewMode} onChange={(e) => onViewModeChange(e.target.value as ViewMode)}>
           <option value="Day">Día</option>

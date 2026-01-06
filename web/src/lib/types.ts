@@ -1,5 +1,7 @@
 export type TaskId = string;
 
+export type TaskType = "task" | "milestone";
+
 export type Task = {
   id: TaskId;
   name: string;
@@ -12,6 +14,13 @@ export type Task = {
   start: string; // ISO date (YYYY-MM-DD)
   end: string; // ISO date (YYYY-MM-DD)
   dependencies: TaskId[];
+  
+  // Nuevos campos para features avanzadas
+  type?: TaskType; // 'task' (default) o 'milestone'
+  parentId?: TaskId | null; // ID de la tarea padre (para jerarquía)
+  level?: number; // Nivel de indentación (0 = root, 1 = hijo, etc.)
+  collapsed?: boolean; // Si está colapsada (solo para tareas con hijos)
+  color?: string | null; // Color personalizado (hex)
 };
 
 export type ProjectRole = "admin" | "editor" | "viewer";

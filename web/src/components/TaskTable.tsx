@@ -19,6 +19,7 @@ export function TaskTable({ tasks, canEdit }: { tasks: Task[]; canEdit: boolean 
       <table style={{ fontSize: 13 }}>
         <thead>
           <tr>
+            <th style={{ width: 50 }}>Tipo</th>
             <th style={{ minWidth: 240 }}>Nombre</th>
             <th style={{ width: 90 }}>Inicio</th>
             <th style={{ width: 90 }}>Término</th>
@@ -30,30 +31,53 @@ export function TaskTable({ tasks, canEdit }: { tasks: Task[]; canEdit: boolean 
           </tr>
         </thead>
         <tbody>
-          {tasks.map((t) => (
-            <tr key={t.id}>
-              <td>
-                <div style={{ fontWeight: 500 }}>{t.name}</div>
-              </td>
-              <td>{t.start}</td>
-              <td>{t.end}</td>
-              <td>
-                {canEdit ? (
-                  <input
-                    type="number"
-                    min={0}
-                    max={100}
-                    value={t.progress}
-                    onChange={async (e: ChangeEvent<HTMLInputElement>) => {
-                      const v = Number(e.target.value);
-                      await upsertTask({ ...t, progress: Number.isFinite(v) ? v : t.progress });
+          {tasks.map((t) => {
+            const level = t.level ?? 0;
+            const isMilestone = t.type === "milestone";
+            const icon = isMilestone ? "◆" : "▪";
+            
+            return (
+              <tr key={t.id}>
+                <td style={{ textAlign: "center", fontSize: 16 }}>
+                  <span title={isMilestone ? "Milestone" : "Tarea"}>
+                    {icon}
+                  </span>
+                </td>
+                <td>
+                  <div
+                    style={{
+                      fontWeight: level === 0 ? 600 : 500,
+                      paddingLeft: level * 20,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 4,
                     }}
-                    style={{ width: 50 }}
-                  />
-                ) : (
-                  `${Math.round(t.progress)}%`
-                )}
-              </td>
+                  >
+                    {level > 0 && <span style={{ opacity: 0.4 }}>└</span>}
+                    {t.name}
+                  </div>
+                </td>
+                <td>{t.start}</td>
+                <td>{isMilestone ? "—" : t.end}</td>
+                <td>
+                  {isMilestone ? (
+                    "—"
+                  ) : canEdit ? (
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={t.progress}
+                      onChange={async (e: ChangeEvent<HTMLInputElement>) => {
+                        const v = Number(e.target.value);
+                        await upsertTask({ ...t, progress: Number.isFinite(v) ? v : t.progress });
+                      }}
+                      style={{ width: 50 }}
+                    />
+                  ) : (
+                    `${Math.round(t.progress)}%`
+                  )}
+                </td>
               <td>
                 {canEdit ? (
                   <input
@@ -103,8 +127,9 @@ export function TaskTable({ tasks, canEdit }: { tasks: Task[]; canEdit: boolean 
                   </button>
                 </td>
               )}
-            </tr>
-          ))}
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
