@@ -26,6 +26,8 @@ type Props = {
   searchQuery?: string;
   onSearchChange?: (query: string) => void;
   tasks?: Task[];
+  showResources?: boolean;
+  onToggleResources?: () => void;
 };
 
 export function Toolbar({
@@ -35,6 +37,8 @@ export function Toolbar({
   onViewModeChange,
   showCriticalPath,
   onToggleCriticalPath,
+  showResources = false,
+  onToggleResources,
   taskCount,
   onCreateTask,
   onCreateMilestone,
@@ -86,6 +90,16 @@ export function Toolbar({
           />
           Ruta crítica
         </label>
+        
+        {onToggleResources && (
+          <button
+            onClick={onToggleResources}
+            title="Ver distribución de tareas por persona"
+            style={{ display: "flex", alignItems: "center", gap: 4 }}
+          >
+            {showResources ? "📊 Ocultar" : "👥 Recursos"}
+          </button>
+        )}
       </div>
 
       {/* Filtros */}

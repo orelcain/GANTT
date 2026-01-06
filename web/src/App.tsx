@@ -8,6 +8,8 @@ import { QuickEditModal } from "./components/QuickEditModal";
 import { Splitter } from "./components/Splitter";
 import { TaskTable } from "./components/TaskTable";
 import { Toolbar } from "./components/Toolbar";
+import { HelpPanel } from "./components/HelpPanel";
+import { ResourceView } from "./components/ResourceView";
 import { useGanttStore } from "./lib/store";
 import type { Task, UserRole } from "./lib/types";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
@@ -23,6 +25,7 @@ export default function App() {
   const [viewMode, setViewMode] = useState<ViewMode>("Day");
   const [showCriticalPath, setShowCriticalPath] = useState(true);
   const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
+  const [showResources, setShowResources] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem("darkMode");
     return saved === "true";
@@ -220,6 +223,8 @@ export default function App() {
             onViewModeChange={setViewMode}
             showCriticalPath={showCriticalPath}
             onToggleCriticalPath={() => setShowCriticalPath(!showCriticalPath)}
+            showResources={showResources}
+            onToggleResources={() => setShowResources(!showResources)}
             taskCount={tasks.length}
             onCreateTask={canEdit ? handleCreateTask : undefined}
             onCreateMilestone={canEdit ? handleCreateMilestone : undefined}
@@ -245,6 +250,8 @@ export default function App() {
                 <h2>No hay tareas</h2>
                 <p>{canEdit ? "Importa el archivo Excel para comenzar." : "El proyecto está vacío."}</p>
               </div>
+            ) : showResources ? (
+              <ResourceView tasks={filteredTasks} />
             ) : (
               <Splitter
                 leftPanel={<TaskTable tasks={filteredTasks} canEdit={canEdit} />}
@@ -278,6 +285,8 @@ export default function App() {
           onClose={() => setTaskToEdit(null)}
         />
       )}
+
+      <HelpPanel />
 
       <footer className="appFooter">
         <small>
