@@ -1,4 +1,5 @@
 import type { ChangeEvent } from "react";
+import { useState, useMemo } from "react";
 
 import type { Task } from "../lib/types";
 import { useGanttStore } from "../lib/store";
@@ -10,21 +11,74 @@ function parseDeps(raw: string): string[] {
     .filter(Boolean);
 }
 
+type SortField = "name" | "start" | "end" | "progress" | "status" | "assignee";
+type SortDirection = "asc" | "desc";
+
 export function TaskTable({ tasks, canEdit }: { tasks: Task[]; canEdit: boolean }) {
   const upsertTask = useGanttStore((s) => s.upsertTask);
   const deleteTask = useGanttStore((s) => s.deleteTask);
+  const [sortField, setSortField] = useState<SortField | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
 
   // Determinar qué tareas tienen hijos
   const tasksWithChildren = new Set(
     tasks.filter((t) => t.parentId).map((t) => t.parentId).filter(Boolean)
   );
 
+  // Ordenar tareas si hay campo seleccionado
+  const sortedTasks = useMemo(() => {
+    if (!sortField) return tasks;
+    
+    return [...tasks].sort((a, b) => {
+      let aVal: any = a[sortField];
+      let bVal: any = b[sortField];
+      
+      // Manejar valores undefined/null
+      if (aVal === undefined || aVal === null) aVal = "";
+      if (bVal === undefined || bVal === null) bVal = "";
+      
+      // Convertir a minúsculas para strings
+      if (typeof aVal === "string") aVal = aVal.toLowerCase();
+      if (typeof bVal === "string") bVal = bVal.toLowerCase();
+      
+      let comparison = 0;
+      if (aVal < bVal) comparison = -1;
+      if (aVal > bVal) comparison = 1;
+      
+      return sortDirection === "asc" ? comparison : -comparison;
+    });
+  }, [tasks, sortField, sortDirection]);
+
   // Filtrar tareas visibles (ocultar hijos si padre está colapsado)
-  const visibleTasks = tasks.filter((t) => {
+  const visibleTasks = sortedTasks.filter((t) => {
     if (!t.parentId) return true; // Root tasks siempre visibles
-    const parent = tasks.find((p) => p.id === t.parentId);
+    const parent = sortedTasks.find((p) => p.id === t.parentId);
     return !parent?.collapsed; // Mostrar solo si padre no está colapsado
   });
+
+  const SortableHeader = ({ field, children, style }: { field: SortField; children: React.ReactNode; style?: React.CSSProperties }) => (
+    <th 
+      style={{ ...style, cursor: "pointer", userSelect: "none" }} 
+      onClick={() => handleSort(field)}
+      title={`Ordenar por ${children}`}
+    >
+      {children}
+      {sortField === field && (
+        <span style={{ marginLeft: 4, fontSize: 10 }}>
+          {sortDirection === "asc" ? "▲" : "▼"}
+        </span>
+      )}
+    </th>
+  );
 
   return (
     <div style={{ height: "100%", overflow: "auto", padding: 16 }}>
@@ -32,12 +86,12 @@ export function TaskTable({ tasks, canEdit }: { tasks: Task[]; canEdit: boolean 
         <thead>
           <tr>
             <th style={{ width: 50 }}>Tipo</th>
-            <th style={{ minWidth: 240 }}>Nombre</th>
-            <th style={{ width: 90 }}>Inicio</th>
-            <th style={{ width: 90 }}>Término</th>
-            <th style={{ width: 140 }}>Progreso</th>
-            <th style={{ width: 100 }}>Estado</th>
-            <th style={{ width: 140 }}>Responsable</th>
+            <SortableHeader field="name" style={{ minWidth: 240 }}>Nombre</SortableHeader>
+            <SortableHeader field="start" style={{ width: 90 }}>Inicio</SortableHeader>
+            <SortableHeader field="end" style={{ width: 90 }}>Término</SortableHeader>
+            <SortableHeader field="progress" style={{ width: 140 }}>Progreso</SortableHeader>
+            <SortableHeader field="status" style={{ width: 100 }}>Estado</SortableHeader>
+            <SortableHeader field="assignee" style={{ width: 140 }}>Responsable</SortableHeader>
             <th style={{ width: 120 }}>Deps</th>
             {canEdit && <th style={{ width: 80 }} />}
           </tr>
