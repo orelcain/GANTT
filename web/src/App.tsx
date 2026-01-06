@@ -22,6 +22,10 @@ export default function App() {
   const [viewMode, setViewMode] = useState<ViewMode>("Day");
   const [showCriticalPath, setShowCriticalPath] = useState(true);
   const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem("darkMode");
+    return saved === "true";
+  });
   
   // Filtros
   const [filterStatus, setFilterStatus] = useState("");
@@ -32,6 +36,15 @@ export default function App() {
     if (role === "anon" || role === "noaccess") return;
     void load();
   }, [load, role]);
+
+  useEffect(() => {
+    localStorage.setItem("darkMode", String(darkMode));
+    if (darkMode) {
+      document.body.classList.add("dark-mode");
+    } else {
+      document.body.classList.remove("dark-mode");
+    }
+  }, [darkMode]);
 
   const canEdit = useMemo(() => role === "admin" || role === "editor", [role]);
   const canManageUsers = useMemo(() => role === "admin", [role]);
@@ -101,13 +114,27 @@ export default function App() {
   return (
     <div className="app">
       <header className="appHeader">
-        <div>
-          <h1>ANTARFOOD · Gantt Mantención (Temporada Baja)</h1>
-          <p style={{ opacity: 0.8, marginTop: 4 }}>
-            Frontend estático (GitHub Pages). Login/roles con Firebase.
-          </p>
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <h1>ANTARFOOD · Gantt Mantención (Temporada Baja)</h1>
+              <span className="version-badge">v0.3.0</span>
+            </div>
+            <p style={{ opacity: 0.8, marginTop: 4 }}>
+              Frontend estático (GitHub Pages). Login/roles con Firebase.
+            </p>
+          </div>
         </div>
-        <AuthBar onRole={setRole} />
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <button
+            onClick={() => setDarkMode(!darkMode)}
+            className="theme-toggle"
+            title={darkMode ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+          >
+            {darkMode ? "☀️" : "🌙"}
+          </button>
+          <AuthBar onRole={setRole} />
+        </div>
       </header>
 
       {error && <div className="error"><strong>Error:</strong> {error}</div>}
