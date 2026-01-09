@@ -211,6 +211,46 @@ body {
   font-size: var(--font-size-sm);
 }
 
+.toolbarGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.toolbarGroupTitle {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+}
+
+.toolbarInlineToggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.toolbarPill {
+  margin-left: 6px;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+.toolbarGroup--filters {
+  flex-basis: 100%;
+  order: 10;
+  padding-top: 2px;
+}
+
 .appMain {
   flex: 1;
   display: flex;

@@ -87,50 +87,52 @@ export function Toolbar({
 
   return (
     <div className="appToolbar">
-      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", minWidth: 0 }}>
-        {onSheetTabChange && (
-          <>
-            <span style={{ fontSize: 13, color: "#586069" }}>Hojas:</span>
-            <button
-              className={sheetTab === "tareas" ? "primary" : undefined}
-              onClick={() => onSheetTabChange("tareas")}
-              title="Equivalente a la hoja Tareas"
-            >
-              🧾 Tareas
-            </button>
-            <button
-              className={sheetTab === "timeline" ? "primary" : undefined}
-              onClick={() => onSheetTabChange("timeline")}
-              title="Equivalente a la hoja Timeline"
-            >
-              📈 Timeline
-            </button>
-            <button
-              className={sheetTab === "settings" ? "primary" : undefined}
-              onClick={() => onSheetTabChange("settings")}
-              title="Equivalente a la hoja Settings"
-            >
-              ⚙️ Settings
-            </button>
-            <div style={{ width: 1, height: 24, background: "#e1e4e8", margin: "0 4px" }} />
-          </>
-        )}
+      {/* Grupo: navegación (equivalente a hojas) */}
+      {onSheetTabChange && (
+        <div className="toolbarGroup toolbarGroup--nav">
+          <span className="toolbarGroupTitle">Hojas</span>
+          <button
+            className={sheetTab === "tareas" ? "primary" : undefined}
+            onClick={() => onSheetTabChange("tareas")}
+            title="Equivalente a la hoja Tareas"
+          >
+            🧾 Tareas
+          </button>
+          <button
+            className={sheetTab === "timeline" ? "primary" : undefined}
+            onClick={() => onSheetTabChange("timeline")}
+            title="Equivalente a la hoja Timeline"
+          >
+            📈 Timeline
+          </button>
+          <button
+            className={sheetTab === "settings" ? "primary" : undefined}
+            onClick={() => onSheetTabChange("settings")}
+            title="Equivalente a la hoja Settings"
+          >
+            ⚙️ Settings
+          </button>
+        </div>
+      )}
 
-        {canEdit && onCreateTask && (
-          <>
-            <button onClick={onCreateTask} title="Crear nueva tarea">
-              + Tarea
+      {/* Grupo: creación */}
+      {canEdit && onCreateTask && (
+        <div className="toolbarGroup toolbarGroup--create">
+          <span className="toolbarGroupTitle">Crear</span>
+          <button onClick={onCreateTask} title="Crear nueva tarea">
+            + Tarea
+          </button>
+          {onCreateMilestone && (
+            <button onClick={onCreateMilestone} title="Crear milestone">
+              ◆ Milestone
             </button>
-            {onCreateMilestone && (
-              <button onClick={onCreateMilestone} title="Crear milestone">
-                ◆ Milestone
-              </button>
-            )}
-            <div style={{ width: 1, height: 24, background: "#e1e4e8", margin: "0 4px" }} />
-          </>
-        )}
-        
-        <span style={{ fontSize: 13, color: "#586069" }}>Vista:</span>
+          )}
+        </div>
+      )}
+
+      {/* Grupo: vista */}
+      <div className="toolbarGroup toolbarGroup--view">
+        <span className="toolbarGroupTitle">Vista</span>
         <select value={viewMode} onChange={(e) => onViewModeChange(e.target.value as ViewMode)}>
           <option value="Day">Día</option>
           <option value="Week">Semana</option>
@@ -138,91 +140,67 @@ export function Toolbar({
         </select>
       </div>
 
-      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", minWidth: 0 }}>
-        <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, cursor: "pointer" }}>
-          <input
-            type="checkbox"
-            checked={showCriticalPath}
-            onChange={onToggleCriticalPath}
-          />
+      {/* Grupo: herramientas */}
+      <div className="toolbarGroup toolbarGroup--tools">
+        <span className="toolbarGroupTitle">Herramientas</span>
+        <label className="toolbarInlineToggle" title="Mostrar/Ocultar ruta crítica">
+          <input type="checkbox" checked={showCriticalPath} onChange={onToggleCriticalPath} />
           Ruta crítica
         </label>
-        
+
         {onToggleDashboard && (
           <button
+            className={showDashboard ? "primary" : undefined}
             onClick={onToggleDashboard}
             title="Ver dashboard con estadísticas del proyecto"
-            style={{ display: "flex", alignItems: "center", gap: 4 }}
           >
-            {showDashboard ? "📊 Ocultar" : "📊 Dashboard"}
+            📊 Dashboard
           </button>
         )}
-        
+
         {onToggleKanban && (
           <button
+            className={showKanban ? "primary" : undefined}
             onClick={onToggleKanban}
             title="Ver tareas en formato Kanban con drag & drop"
-            style={{ display: "flex", alignItems: "center", gap: 4 }}
           >
-            {showKanban ? "📋 Ocultar" : "📋 Kanban"}
+            📋 Kanban
           </button>
         )}
-        
+
         {onToggleCalendar && (
           <button
+            className={showCalendar ? "primary" : undefined}
             onClick={onToggleCalendar}
             title="Ver tareas en formato Calendario mensual"
-            style={{ display: "flex", alignItems: "center", gap: 4 }}
           >
-            {showCalendar ? "📅 Ocultar" : "📅 Calendario"}
+            📅 Calendario
           </button>
         )}
-        
+
         {onToggleResources && (
           <button
+            className={showResources ? "primary" : undefined}
             onClick={onToggleResources}
             title="Ver distribución de tareas por persona"
-            style={{ display: "flex", alignItems: "center", gap: 4 }}
           >
-            {showResources ? "👥 Ocultar" : "👥 Recursos"}
+            👥 Recursos
           </button>
         )}
-        
-        <button
-          onClick={() => setShowBaselineManager(true)}
-          title="Gestionar baselines del proyecto"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 4,
-            position: "relative",
-          }}
-        >
+
+        <button onClick={() => setShowBaselineManager(true)} title="Gestionar baselines del proyecto" style={{ position: "relative" }}>
           📊 Baseline
           {activeBaselineId && (
-            <span
-              style={{
-                background: "#0969da",
-                color: "#fff",
-                fontSize: 10,
-                padding: "2px 6px",
-                borderRadius: 10,
-                fontWeight: 600,
-              }}
-            >
+            <span className="toolbarPill" title="Cantidad de baselines">
               {baselines.length}
             </span>
           )}
         </button>
       </div>
 
-      {/* Filtros */}
-      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", minWidth: 0 }}>
-        <div style={{ width: 1, height: 24, background: "#e1e4e8", margin: "0 4px" }} />
-        
-        <span style={{ fontSize: 11, color: "#8993a4", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-          Filtros:
-        </span>
+      {/* Grupo: filtros (siempre en segunda fila) */}
+      <div className="toolbarGroup toolbarGroup--filters">
+        <span className="toolbarGroupTitle">Filtros</span>
 
         {onFilterTypeChange && (
           <select
@@ -375,6 +353,7 @@ export function Toolbar({
 
       {/* Bloque derecho */}
       <div
+        className="toolbarGroup toolbarGroup--actions"
         style={{
           marginLeft: "auto",
           display: "flex",
