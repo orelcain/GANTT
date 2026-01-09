@@ -127,6 +127,7 @@ export function TaskTable({ tasks, canEdit }: { tasks: Task[]; canEdit: boolean 
             <SortableHeader field="status" style={{ width: 80 }}>Estado</SortableHeader>
             <SortableHeader field="assignee" style={{ width: 100 }}>Resp.</SortableHeader>
             <th style={{ width: 120 }}>Tags</th>
+            <th style={{ width: 50 }}>💬</th>
             <th style={{ width: 80 }}>Deps</th>
             {canEdit && <th style={{ width: 70 }} />}
           </tr>
@@ -303,6 +304,28 @@ export function TaskTable({ tasks, canEdit }: { tasks: Task[]; canEdit: boolean 
                       );
                     })}
                   </div>
+                ) : (
+                  <span style={{ fontSize: 10, color: "var(--color-text-muted)" }}>—</span>
+                )}
+              </td>
+              <td style={{ textAlign: "center" }}>
+                {t.comments && t.comments.length > 0 ? (
+                  <span
+                    style={{
+                      fontSize: 11,
+                      padding: "2px 6px",
+                      borderRadius: 8,
+                      background: "#ddf4ff",
+                      color: "#0969da",
+                      fontWeight: 600,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 2,
+                    }}
+                    title={`${t.comments.length} comentario${t.comments.length > 1 ? "s" : ""}`}
+                  >
+                    💬 {t.comments.length}
+                  </span>
                 ) : (
                   <span style={{ fontSize: 10, color: "var(--color-text-muted)" }}>—</span>
                 )}

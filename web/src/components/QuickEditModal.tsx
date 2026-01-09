@@ -2,15 +2,18 @@ import { useState } from "react";
 
 import type { Task } from "../lib/types";
 import { useGanttStore } from "../lib/store";
+import { CommentsPanel } from "./CommentsPanel";
 
 type Props = {
   task: Task;
   onSave: (updates: Partial<Task>) => void;
   onClose: () => void;
+  currentUser?: string;
 };
 
-export function QuickEditModal({ task, onSave, onClose }: Props) {
+export function QuickEditModal({ task, onSave, onClose, currentUser }: Props) {
   const { tags: availableTags } = useGanttStore();
+  const [activeTab, setActiveTab] = useState<"details" | "comments">("details");
   const [name, setName] = useState(task.name);
   const [start, setStart] = useState(task.start);
   const [end, setEnd] = useState(task.end);
@@ -89,6 +92,59 @@ export function QuickEditModal({ task, onSave, onClose }: Props) {
           </button>
         </div>
 
+        {/* Tabs */}
+        <div style={{ display: "flex", gap: 8, marginBottom: 20, borderBottom: "2px solid var(--color-border-default)" }}>
+          <button
+            onClick={() => setActiveTab("details")}
+            style={{
+              padding: "8px 16px",
+              background: "none",
+              border: "none",
+              borderBottom: activeTab === "details" ? "2px solid #0969da" : "2px solid transparent",
+              cursor: "pointer",
+              fontWeight: activeTab === "details" ? 600 : 400,
+              color: activeTab === "details" ? "#0969da" : "var(--color-fg-muted)",
+              marginBottom: -2,
+            }}
+          >
+            📝 Detalles
+          </button>
+          <button
+            onClick={() => setActiveTab("comments")}
+            style={{
+              padding: "8px 16px",
+              background: "none",
+              border: "none",
+              borderBottom: activeTab === "comments" ? "2px solid #0969da" : "2px solid transparent",
+              cursor: "pointer",
+              fontWeight: activeTab === "comments" ? 600 : 400,
+              color: activeTab === "comments" ? "#0969da" : "var(--color-fg-muted)",
+              marginBottom: -2,
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
+            }}
+          >
+            💬 Comentarios
+            {task.comments && task.comments.length > 0 && (
+              <span
+                style={{
+                  background: "#0969da",
+                  color: "#fff",
+                  padding: "2px 6px",
+                  borderRadius: 10,
+                  fontSize: 11,
+                  fontWeight: 600,
+                }}
+              >
+                {task.comments.length}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {activeTab === "details" ? (
+        <>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <label>
             <div style={{ fontWeight: 500, marginBottom: 6 }}>Nombre</div>
@@ -223,6 +279,10 @@ export function QuickEditModal({ task, onSave, onClose }: Props) {
             Guardar
           </button>
         </div>
+        </>
+        ) : (
+          <CommentsPanel task={task} currentUser={currentUser} />
+        )}
       </div>
     </div>
   );

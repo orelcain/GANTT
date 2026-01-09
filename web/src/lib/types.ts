@@ -22,6 +22,7 @@ export type Task = {
   collapsed?: boolean; // Si está colapsada (solo para tareas con hijos)
   color?: string | null; // Color personalizado (hex)
   tags?: string[]; // Tags/etiquetas para categorización
+  comments?: Comment[]; // Comentarios de la tarea
 };
 
 export type ProjectRole = "admin" | "editor" | "viewer";
@@ -38,4 +39,12 @@ export type Tag = {
   id: string;
   name: string;
   color: string; // hex color
+};
+
+export type Comment = {
+  id: string;
+  taskId: TaskId;
+  author: string;
+  content: string;
+  timestamp: string; // ISO timestamp
 };

@@ -365,6 +365,7 @@ export function KanbanView({ tasks, canEdit = false }: Props) {
                         justifyContent: "space-between",
                         alignItems: "center",
                         marginTop: 8,
+                        gap: 8,
                       }}>
                         {/* Avatar */}
                         <div
@@ -386,19 +387,38 @@ export function KanbanView({ tasks, canEdit = false }: Props) {
                           {assigneeInitials}
                         </div>
 
-                        {/* Dependencies Badge */}
-                        {task.dependencies && task.dependencies.length > 0 && (
-                          <div style={{
-                            background: "var(--color-accent-subtle)",
-                            color: "var(--color-accent-fg)",
-                            padding: "2px 6px",
-                            borderRadius: 4,
-                            fontSize: 10,
-                            fontWeight: 500,
-                          }}>
-                            🔗 {task.dependencies.length}
-                          </div>
-                        )}
+                        <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                          {/* Comments Badge */}
+                          {task.comments && task.comments.length > 0 && (
+                            <div style={{
+                              background: "#ddf4ff",
+                              color: "#0969da",
+                              padding: "2px 6px",
+                              borderRadius: 4,
+                              fontSize: 10,
+                              fontWeight: 600,
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 2,
+                            }}>
+                              💬 {task.comments.length}
+                            </div>
+                          )}
+
+                          {/* Dependencies Badge */}
+                          {task.dependencies && task.dependencies.length > 0 && (
+                            <div style={{
+                              background: "var(--color-accent-subtle)",
+                              color: "var(--color-accent-fg)",
+                              padding: "2px 6px",
+                              borderRadius: 4,
+                              fontSize: 10,
+                              fontWeight: 500,
+                            }}>
+                              🔗 {task.dependencies.length}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );

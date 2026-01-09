@@ -183,10 +183,10 @@ export default function App() {
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <h1>ANTARFOOD · Gantt Mantención (Temporada Baja)</h1>
-              <span className="version-badge">v0.10.0</span>
+              <span className="version-badge">v0.12.0</span>
             </div>
             <p style={{ opacity: 0.8, marginTop: 4 }}>
-              Dashboard Ejecutivo · Vista Kanban · Exportación PDF/PNG · Recursos · Ruta Crítica
+              Dashboard · Kanban · Tags · Comentarios · Exportación · Recursos · Ruta Crítica
             </p>
           </div>
         </div>
@@ -299,6 +299,7 @@ export default function App() {
             await upsertTask({ ...taskToEdit, ...updates });
           }}
           onClose={() => setTaskToEdit(null)}
+          currentUser={filterAssignee || "Usuario"}
         />
       )}
 
