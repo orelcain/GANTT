@@ -12,6 +12,7 @@ import { HelpPanel } from "./components/HelpPanel";
 import { ResourceView } from "./components/ResourceView";
 import { Dashboard } from "./components/Dashboard";
 import { KanbanView } from "./components/KanbanView";
+import { CalendarView } from "./components/CalendarView";
 import { NotificationCenter } from "./components/NotificationCenter";
 import { useGanttStore } from "./lib/store";
 import type { Task, UserRole } from "./lib/types";
@@ -33,6 +34,7 @@ export default function App() {
   const [showResources, setShowResources] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
   const [showKanban, setShowKanban] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem("darkMode");
     return saved === "true";
@@ -235,10 +237,10 @@ export default function App() {
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <h1>ANTARFOOD · Gantt Mantención (Temporada Baja)</h1>
-              <span className="version-badge">v0.14.0</span>
+              <span className="version-badge">v0.15.0</span>
             </div>
             <p style={{ opacity: 0.8, marginTop: 4 }}>
-              Dashboard · Kanban · Tags · Comentarios · Notificaciones · Baselines · Exportación · Recursos · Ruta Crítica
+              Dashboard · Kanban · Calendario · Tags · Comentarios · Notificaciones · Baselines · Exportación · Recursos · Ruta Crítica
             </p>
           </div>
         </div>
@@ -286,6 +288,8 @@ export default function App() {
             onToggleDashboard={() => setShowDashboard(!showDashboard)}
             showKanban={showKanban}
             onToggleKanban={() => setShowKanban(!showKanban)}
+            showCalendar={showCalendar}
+            onToggleCalendar={() => setShowCalendar(!showCalendar)}
             showResources={showResources}
             onToggleResources={() => setShowResources(!showResources)}
             taskCount={tasks.length}
@@ -319,6 +323,11 @@ export default function App() {
               <Dashboard tasks={filteredTasks} />
             ) : showKanban ? (
               <KanbanView tasks={filteredTasks} canEdit={canEdit} />
+            ) : showCalendar ? (
+              <CalendarView 
+                tasks={filteredTasks}
+                onTaskClick={canEdit ? (task) => setTaskToEdit(task) : undefined}
+              />
             ) : showResources ? (
               <ResourceView tasks={filteredTasks} />
             ) : (

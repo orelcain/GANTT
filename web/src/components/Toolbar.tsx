@@ -38,6 +38,8 @@ type Props = {
   onToggleDashboard?: () => void;
   showKanban?: boolean;
   onToggleKanban?: () => void;
+  showCalendar?: boolean;
+  onToggleCalendar?: () => void;
 };
 
 export function Toolbar({
@@ -53,6 +55,8 @@ export function Toolbar({
   onToggleDashboard,
   showKanban = false,
   onToggleKanban,
+  showCalendar = false,
+  onToggleCalendar,
   taskCount,
   onCreateTask,
   onCreateMilestone,
@@ -128,6 +132,16 @@ export function Toolbar({
             style={{ display: "flex", alignItems: "center", gap: 4 }}
           >
             {showKanban ? "📋 Ocultar" : "📋 Kanban"}
+          </button>
+        )}
+        
+        {onToggleCalendar && (
+          <button
+            onClick={onToggleCalendar}
+            title="Ver tareas en formato Calendario mensual"
+            style={{ display: "flex", alignItems: "center", gap: 4 }}
+          >
+            {showCalendar ? "📅 Ocultar" : "📅 Calendario"}
           </button>
         )}
         
