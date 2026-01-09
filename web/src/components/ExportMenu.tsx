@@ -1,4 +1,6 @@
 import { useState } from "react";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import type { Task } from "../lib/types";
 
 type Props = {
@@ -7,6 +9,11 @@ type Props = {
 
 export function ExportMenu({ tasks }: Props) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const getGanttContainer = (): HTMLElement | null => {
+    return document.querySelector('[data-gantt-container]') as HTMLElement;
+  };
 
   const exportToCSV = () => {
     const headers = ["ID", "Nombre", "Inicio", "Fin", "Progreso", "Estado", "Responsable", "Dependencias", "Tipo"];
@@ -44,6 +51,74 @@ export function ExportMenu({ tasks }: Props) {
     setIsOpen(false);
   };
 
+  const exportToPNG = async () => {
+    const container = getGanttContainer();
+    if (!container) {
+      alert("No se puede capturar el Gantt en este momento");
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      const canvas = await html2canvas(container, {
+        scale: 2, // Alta calidad
+        backgroundColor: "#ffffff",
+        logging: false,
+        useCORS: true,
+      });
+
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.download = `gantt_${new Date().toISOString().split("T")[0]}.png`;
+          link.click();
+        }
+        setIsExporting(false);
+        setIsOpen(false);
+      });
+    } catch (error) {
+      console.error("Error al exportar PNG:", error);
+      alert("Error al generar la imagen");
+      setIsExporting(false);
+    }
+  };
+
+  const exportToPDF = async () => {
+    const container = getGanttContainer();
+    if (!container) {
+      alert("No se puede capturar el Gantt en este momento");
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      const canvas = await html2canvas(container, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+        logging: false,
+        useCORS: true,
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({
+        orientation: canvas.width > canvas.height ? "landscape" : "portrait",
+        unit: "px",
+        format: [canvas.width, canvas.height],
+      });
+
+      pdf.addImage(imgData, "PNG", 0, 0, canvas.width, canvas.height);
+      pdf.save(`gantt_${new Date().toISOString().split("T")[0]}.pdf`);
+      
+      setIsExporting(false);
+      setIsOpen(false);
+    } catch (error) {
+      console.error("Error al exportar PDF:", error);
+      alert("Error al generar el PDF");
+      setIsExporting(false);
+    }
+  };
+
   const printGantt = () => {
     window.print();
     setIsOpen(false);
@@ -55,8 +130,9 @@ export function ExportMenu({ tasks }: Props) {
         onClick={() => setIsOpen(!isOpen)}
         title="Exportar datos"
         style={{ display: "flex", alignItems: "center", gap: 4 }}
+        disabled={isExporting}
       >
-        📥 Exportar
+        {isExporting ? "⏳" : "📥"} Exportar
       </button>
       
       {isOpen && (
@@ -81,55 +157,130 @@ export function ExportMenu({ tasks }: Props) {
               background: "var(--color-surface)",
               border: "1px solid var(--color-border)",
               borderRadius: "var(--radius-md)",
-              boxShadow: "var(--shadow-lg)",
+              boxShadow: "0 8px 24px rgba(0, 0, 0, 0.15)",
               zIndex: 1000,
-              minWidth: 150,
+              minWidth: 180,
+              overflow: "hidden",
             }}
           >
+            <div style={{ padding: "6px 12px", fontSize: 10, fontWeight: 600, color: "var(--color-text-muted)", textTransform: "uppercase", borderBottom: "1px solid var(--color-border-light)" }}>
+              Exportar como
+            </div>
+            
+            <button
+              onClick={exportToPDF}
+              disabled={isExporting}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                width: "100%",
+                textAlign: "left",
+                padding: "10px 12px",
+                border: "none",
+                background: "transparent",
+                cursor: isExporting ? "not-allowed" : "pointer",
+                fontSize: 13,
+                transition: "background 0.15s ease",
+              }}
+              onMouseEnter={(e) => !isExporting && (e.currentTarget.style.background = "var(--color-bg)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+            >
+              <span style={{ fontSize: 16 }}>📕</span>
+              <span style={{ fontWeight: 500 }}>PDF Document</span>
+            </button>
+
+            <button
+              onClick={exportToPNG}
+              disabled={isExporting}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                width: "100%",
+                textAlign: "left",
+                padding: "10px 12px",
+                border: "none",
+                background: "transparent",
+                cursor: isExporting ? "not-allowed" : "pointer",
+                fontSize: 13,
+                transition: "background 0.15s ease",
+              }}
+              onMouseEnter={(e) => !isExporting && (e.currentTarget.style.background = "var(--color-bg)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+            >
+              <span style={{ fontSize: 16 }}>🖼️</span>
+              <span style={{ fontWeight: 500 }}>PNG Image</span>
+            </button>
+
+            <div style={{ height: 1, background: "var(--color-border-light)", margin: "4px 0" }} />
+
             <button
               onClick={exportToCSV}
               style={{
-                display: "block",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
                 width: "100%",
                 textAlign: "left",
-                padding: "8px 12px",
+                padding: "10px 12px",
                 border: "none",
                 background: "transparent",
                 cursor: "pointer",
-                fontSize: 12,
+                fontSize: 13,
+                transition: "background 0.15s ease",
               }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--color-bg)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
             >
-              📊 CSV
+              <span style={{ fontSize: 16 }}>📊</span>
+              <span style={{ fontWeight: 500 }}>CSV Spreadsheet</span>
             </button>
+            
             <button
               onClick={exportToJSON}
               style={{
-                display: "block",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
                 width: "100%",
                 textAlign: "left",
-                padding: "8px 12px",
+                padding: "10px 12px",
                 border: "none",
                 background: "transparent",
                 cursor: "pointer",
-                fontSize: 12,
+                fontSize: 13,
+                transition: "background 0.15s ease",
               }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--color-bg)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
             >
-              📄 JSON
+              <span style={{ fontSize: 16 }}>📄</span>
+              <span style={{ fontWeight: 500 }}>JSON Data</span>
             </button>
+
+            <div style={{ height: 1, background: "var(--color-border-light)", margin: "4px 0" }} />
+
             <button
               onClick={printGantt}
               style={{
-                display: "block",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
                 width: "100%",
                 textAlign: "left",
-                padding: "8px 12px",
+                padding: "10px 12px",
                 border: "none",
                 background: "transparent",
                 cursor: "pointer",
-                fontSize: 12,
+                fontSize: 13,
+                transition: "background 0.15s ease",
               }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--color-bg)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
             >
-              🖨️ Imprimir
+              <span style={{ fontSize: 16 }}>🖨️</span>
+              <span style={{ fontWeight: 500 }}>Print Preview</span>
             </button>
           </div>
         </>

@@ -1,7 +1,7 @@
 {
   "name": "web",
   "private": true,
-  "version": "0.7.0",
+  "version": "0.8.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -17,6 +17,8 @@
     "exceljs": "^4.4.0",
     "firebase": "^12.7.0",
     "frappe-gantt": "^1.0.4",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.0.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "tslib": "^2.8.1",

@@ -30,6 +30,7 @@ export function GanttView({
   onTaskClick,
 }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
   const ganttInstanceRef = useRef<any>(null);
   const [currentViewMode, setCurrentViewMode] = useState<ViewMode>(viewMode);
 
@@ -233,7 +234,7 @@ export function GanttView({
   };
 
   return (
-    <div style={{ padding: 16, overflow: "auto", position: "relative" }}>
+    <div ref={wrapperRef} style={{ padding: 16, overflow: "auto", position: "relative" }} data-gantt-container>
       {/* Controles de zoom - estilo GanttPRO */}
       <div className="zoom-controls">
         <button 
@@ -273,3 +274,6 @@ export function GanttView({
     </div>
   );
 }
+
+// Exportar la referencia del wrapper para captura
+export { type Props as GanttViewProps };
