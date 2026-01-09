@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Gantt from "frappe-gantt";
 
 import { computeCriticalPath } from "../lib/criticalPath";
+import { useGanttStore } from "../lib/store";
 import type { Task } from "../lib/types";
 
 export type ViewMode = "Day" | "Week" | "Month";
@@ -33,6 +34,8 @@ export function GanttView({
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const ganttInstanceRef = useRef<any>(null);
   const [currentViewMode, setCurrentViewMode] = useState<ViewMode>(viewMode);
+  
+  const { activeBaselineId, getTaskVariance } = useGanttStore();
 
   // Filtrar tareas visibles (excluir hijos de padres colapsados)
   const visibleTasks = useMemo(() => {
@@ -172,6 +175,41 @@ export function GanttView({
                 <span class="tooltip-value">${originalTask.dependencies.join(", ")}</span>
               </div>
             ` : ""}
+            ${(() => {
+              if (!activeBaselineId) return "";
+              const variance = getTaskVariance(originalTask.id);
+              if (!variance) return "";
+              const { startDiff, endDiff, progressDiff } = variance;
+              
+              const formatDiff = (days: number) => {
+                if (days === 0) return "Sin cambio";
+                const sign = days > 0 ? "+" : "";
+                return `${sign}${days} día${Math.abs(days) !== 1 ? 's' : ''}`;
+              };
+              
+              return `
+                <div class="tooltip-divider"></div>
+                <div class="tooltip-section-title">📊 Varianza vs Baseline</div>
+                <div class="tooltip-row">
+                  <span class="tooltip-label">Inicio:</span>
+                  <span class="tooltip-value" style="color: ${startDiff > 0 ? '#cf222e' : startDiff < 0 ? '#1a7f37' : 'inherit'}">
+                    ${formatDiff(startDiff)}
+                  </span>
+                </div>
+                <div class="tooltip-row">
+                  <span class="tooltip-label">Fin:</span>
+                  <span class="tooltip-value" style="color: ${endDiff > 0 ? '#cf222e' : endDiff < 0 ? '#1a7f37' : 'inherit'}">
+                    ${formatDiff(endDiff)}
+                  </span>
+                </div>
+                <div class="tooltip-row">
+                  <span class="tooltip-label">Progreso:</span>
+                  <span class="tooltip-value" style="color: ${progressDiff < 0 ? '#cf222e' : progressDiff > 0 ? '#1a7f37' : 'inherit'}">
+                    ${progressDiff > 0 ? '+' : ''}${progressDiff}%
+                  </span>
+                </div>
+              `;
+            })()}
           </div>
         `;
       },

@@ -8,7 +8,7 @@ import {
   replaceAllTasks,
   upsertTask as upsertTaskRemote,
 } from "./firestoreTasks";
-import type { Task, TaskId, Tag, Notification } from "./types";
+import type { Task, TaskId, Tag, Notification, Baseline } from "./types";
 
 export type GanttState = {
   tasks: Task[];
@@ -22,6 +22,10 @@ export type GanttState = {
   
   // Notificaciones
   notifications: Notification[];
+  
+  // Baselines para comparación
+  baselines: Baseline[];
+  activeBaselineId: string | null;
 
   load: () => Promise<void>;
   upsertTask: (task: Task) => Promise<void>;
@@ -40,6 +44,12 @@ export type GanttState = {
   markAsRead: (notificationId: string) => void;
   markAllAsRead: () => void;
   clearNotifications: () => void;
+  
+  // Gestión de baselines
+  addBaseline: (name: string) => void;
+  deleteBaseline: (baselineId: string) => void;
+  setActiveBaseline: (baselineId: string | null) => void;
+  getTaskVariance: (taskId: TaskId) => { startDiff: number; endDiff: number; progressDiff: number } | null;
 };
 
 export const useGanttStore = create<GanttState>((set, get) => ({
@@ -57,6 +67,11 @@ export const useGanttStore = create<GanttState>((set, get) => ({
     const saved = localStorage.getItem("gantt-notifications");
     return saved ? JSON.parse(saved) : [];
   })(),
+  baselines: (() => {
+    const saved = localStorage.getItem("gantt-baselines");
+    return saved ? JSON.parse(saved) : [];
+  })(),
+  activeBaselineId: localStorage.getItem("gantt-active-baseline"),
 
   _unsub: undefined as undefined | (() => void),
 
@@ -194,5 +209,62 @@ export const useGanttStore = create<GanttState>((set, get) => ({
   clearNotifications: () => {
     set({ notifications: [] });
     localStorage.removeItem("gantt-notifications");
+  },
+
+  addBaseline: (name) => {
+    const baseline: Baseline = {
+      id: `baseline-${Date.now()}`,
+      name,
+      timestamp: new Date().toISOString(),
+      tasks: JSON.parse(JSON.stringify(get().tasks)), // Deep copy
+    };
+    set((state) => ({ baselines: [...state.baselines, baseline] }));
+    localStorage.setItem("gantt-baselines", JSON.stringify(get().baselines));
+  },
+
+  deleteBaseline: (baselineId) => {
+    const state = get();
+    set((state) => ({
+      baselines: state.baselines.filter((b) => b.id !== baselineId),
+      activeBaselineId: state.activeBaselineId === baselineId ? null : state.activeBaselineId,
+    }));
+    localStorage.setItem("gantt-baselines", JSON.stringify(get().baselines));
+    if (state.activeBaselineId === baselineId) {
+      localStorage.removeItem("gantt-active-baseline");
+    }
+  },
+
+  setActiveBaseline: (baselineId) => {
+    set({ activeBaselineId: baselineId });
+    if (baselineId) {
+      localStorage.setItem("gantt-active-baseline", baselineId);
+    } else {
+      localStorage.removeItem("gantt-active-baseline");
+    }
+  },
+
+  getTaskVariance: (taskId) => {
+    const state = get();
+    if (!state.activeBaselineId) return null;
+
+    const baseline = state.baselines.find((b) => b.id === state.activeBaselineId);
+    if (!baseline) return null;
+
+    const currentTask = state.tasks.find((t) => t.id === taskId);
+    const baselineTask = baseline.tasks.find((t) => t.id === taskId);
+
+    if (!currentTask || !baselineTask) return null;
+
+    const startDiff = Math.floor(
+      (new Date(currentTask.start).getTime() - new Date(baselineTask.start).getTime()) /
+        (1000 * 60 * 60 * 24)
+    );
+    const endDiff = Math.floor(
+      (new Date(currentTask.end).getTime() - new Date(baselineTask.end).getTime()) /
+        (1000 * 60 * 60 * 24)
+    );
+    const progressDiff = currentTask.progress - baselineTask.progress;
+
+    return { startDiff, endDiff, progressDiff };
   },
 }));

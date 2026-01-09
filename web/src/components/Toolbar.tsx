@@ -3,6 +3,7 @@ import { ImportExcel } from "./ImportExcel";
 import { MembersAdmin } from "./MembersAdmin";
 import { ExportMenu } from "./ExportMenu";
 import { TagsManager } from "./TagsManager";
+import { BaselineManager } from "./BaselineManager";
 import { useGanttStore } from "../lib/store";
 import type { Task } from "../lib/types";
 
@@ -69,9 +70,10 @@ export function Toolbar({
   tasks = [],
   onSearchChange,
 }: Props) {
-  const { tags: availableTags } = useGanttStore();
+  const { tags: availableTags, baselines, activeBaselineId } = useGanttStore();
   const [showTagsManager, setShowTagsManager] = useState(false);
   const [showTagFilter, setShowTagFilter] = useState(false);
+  const [showBaselineManager, setShowBaselineManager] = useState(false);
   const hasActiveFilters = filterStatus || filterAssignee || filterType || searchQuery || filterTags.length > 0;
 
   return (
@@ -138,6 +140,33 @@ export function Toolbar({
             {showResources ? "👥 Ocultar" : "👥 Recursos"}
           </button>
         )}
+        
+        <button
+          onClick={() => setShowBaselineManager(true)}
+          title="Gestionar baselines del proyecto"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+            position: "relative",
+          }}
+        >
+          📊 Baseline
+          {activeBaselineId && (
+            <span
+              style={{
+                background: "#0969da",
+                color: "#fff",
+                fontSize: 10,
+                padding: "2px 6px",
+                borderRadius: 10,
+                fontWeight: 600,
+              }}
+            >
+              {baselines.length}
+            </span>
+          )}
+        </button>
       </div>
 
       {/* Filtros */}
@@ -324,6 +353,7 @@ export function Toolbar({
       {canManageUsers && <MembersAdmin enabled />}
 
       {showTagsManager && <TagsManager onClose={() => setShowTagsManager(false)} />}
+      {showBaselineManager && <BaselineManager onClose={() => setShowBaselineManager(false)} />}
     </div>
   );
 }

@@ -60,3 +60,10 @@ export type Notification = {
   timestamp: string; // ISO timestamp
   read: boolean;
 };
+
+export type Baseline = {
+  id: string;
+  name: string;
+  timestamp: string; // ISO timestamp
+  tasks: Task[]; // Snapshot completo de tareas
+};
