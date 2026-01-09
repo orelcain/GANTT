@@ -8,8 +8,11 @@ import { useGanttStore } from "../lib/store";
 import type { Task } from "../lib/types";
 
 type ViewMode = "Day" | "Week" | "Month";
+export type SheetTab = "tareas" | "timeline" | "settings";
 
 type Props = {
+  sheetTab?: SheetTab;
+  onSheetTabChange?: (tab: SheetTab) => void;
   canEdit: boolean;
   canManageUsers: boolean;
   viewMode: ViewMode;
@@ -43,6 +46,8 @@ type Props = {
 };
 
 export function Toolbar({
+  sheetTab = "timeline",
+  onSheetTabChange,
   canEdit,
   canManageUsers,
   viewMode,
@@ -83,6 +88,34 @@ export function Toolbar({
   return (
     <div className="appToolbar">
       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        {onSheetTabChange && (
+          <>
+            <span style={{ fontSize: 13, color: "#586069" }}>Hojas:</span>
+            <button
+              className={sheetTab === "tareas" ? "primary" : undefined}
+              onClick={() => onSheetTabChange("tareas")}
+              title="Equivalente a la hoja Tareas"
+            >
+              🧾 Tareas
+            </button>
+            <button
+              className={sheetTab === "timeline" ? "primary" : undefined}
+              onClick={() => onSheetTabChange("timeline")}
+              title="Equivalente a la hoja Timeline"
+            >
+              📈 Timeline
+            </button>
+            <button
+              className={sheetTab === "settings" ? "primary" : undefined}
+              onClick={() => onSheetTabChange("settings")}
+              title="Equivalente a la hoja Settings"
+            >
+              ⚙️ Settings
+            </button>
+            <div style={{ width: 1, height: 24, background: "#e1e4e8", margin: "0 4px" }} />
+          </>
+        )}
+
         {canEdit && onCreateTask && (
           <>
             <button onClick={onCreateTask} title="Crear nueva tarea">

@@ -5,7 +5,6 @@ import { useEffect, useMemo, useState } from "react";
 import { AuthBar } from "./components/AuthBar";
 import { GanttView, type ViewMode } from "./components/GanttView";
 import { QuickEditModal } from "./components/QuickEditModal";
-import { Splitter } from "./components/Splitter";
 import { TaskTable } from "./components/TaskTable";
 import { Toolbar } from "./components/Toolbar";
 import { HelpPanel } from "./components/HelpPanel";
@@ -14,6 +13,8 @@ import { Dashboard } from "./components/Dashboard";
 import { KanbanView } from "./components/KanbanView";
 import { CalendarView } from "./components/CalendarView";
 import { NotificationCenter } from "./components/NotificationCenter";
+import { SettingsView } from "./components/SettingsView";
+import type { SheetTab } from "./components/Toolbar";
 import { useGanttStore } from "./lib/store";
 import type { Task, UserRole } from "./lib/types";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
@@ -35,6 +36,7 @@ export default function App() {
   const [showDashboard, setShowDashboard] = useState(false);
   const [showKanban, setShowKanban] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
+  const [sheetTab, setSheetTab] = useState<SheetTab>("timeline");
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem("darkMode");
     return saved === "true";
@@ -280,6 +282,8 @@ export default function App() {
           <Toolbar
             canEdit={canEdit}
             canManageUsers={canManageUsers}
+            sheetTab={sheetTab}
+            onSheetTabChange={setSheetTab}
             viewMode={viewMode}
             onViewModeChange={setViewMode}
             showCriticalPath={showCriticalPath}
@@ -331,24 +335,21 @@ export default function App() {
             ) : showResources ? (
               <ResourceView tasks={filteredTasks} />
             ) : (
-              <Splitter
-                leftPanel={<TaskTable tasks={filteredTasks} canEdit={canEdit} />}
-                rightPanel={
-                  <GanttView
-                    tasks={filteredTasks}
-                    viewMode={viewMode}
-                    showCriticalPath={showCriticalPath}
-                    onTaskChange={canEdit ? async (task, changes) => {
-                      await upsertTask({ ...task, ...changes });
-                    } : undefined}
-                    onTaskClick={canEdit ? (task) => setTaskToEdit(task) : undefined}
-                  />
-                }
-                defaultSplitPosition={45}
-                minLeftWidth={320}
-                minRightWidth={400}
-                storageKey="gantt-split-position"
-              />
+              sheetTab === "settings" ? (
+                <SettingsView />
+              ) : sheetTab === "tareas" ? (
+                <TaskTable tasks={filteredTasks} canEdit={canEdit} />
+              ) : (
+                <GanttView
+                  tasks={filteredTasks}
+                  viewMode={viewMode}
+                  showCriticalPath={showCriticalPath}
+                  onTaskChange={canEdit ? async (task, changes) => {
+                    await upsertTask({ ...task, ...changes });
+                  } : undefined}
+                  onTaskClick={canEdit ? (task) => setTaskToEdit(task) : undefined}
+                />
+              )
             )}
           </main>
         </>
