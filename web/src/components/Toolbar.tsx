@@ -28,6 +28,8 @@ type Props = {
   tasks?: Task[];
   showResources?: boolean;
   onToggleResources?: () => void;
+  showDashboard?: boolean;
+  onToggleDashboard?: () => void;
 };
 
 export function Toolbar({
@@ -39,6 +41,8 @@ export function Toolbar({
   onToggleCriticalPath,
   showResources = false,
   onToggleResources,
+  showDashboard = false,
+  onToggleDashboard,
   taskCount,
   onCreateTask,
   onCreateMilestone,
@@ -91,13 +95,23 @@ export function Toolbar({
           Ruta crítica
         </label>
         
+        {onToggleDashboard && (
+          <button
+            onClick={onToggleDashboard}
+            title="Ver dashboard con estadísticas del proyecto"
+            style={{ display: "flex", alignItems: "center", gap: 4 }}
+          >
+            {showDashboard ? "📊 Ocultar" : "📊 Dashboard"}
+          </button>
+        )}
+        
         {onToggleResources && (
           <button
             onClick={onToggleResources}
             title="Ver distribución de tareas por persona"
             style={{ display: "flex", alignItems: "center", gap: 4 }}
           >
-            {showResources ? "📊 Ocultar" : "👥 Recursos"}
+            {showResources ? "👥 Ocultar" : "👥 Recursos"}
           </button>
         )}
       </div>

@@ -10,6 +10,7 @@ import { TaskTable } from "./components/TaskTable";
 import { Toolbar } from "./components/Toolbar";
 import { HelpPanel } from "./components/HelpPanel";
 import { ResourceView } from "./components/ResourceView";
+import { Dashboard } from "./components/Dashboard";
 import { useGanttStore } from "./lib/store";
 import type { Task, UserRole } from "./lib/types";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
@@ -26,6 +27,7 @@ export default function App() {
   const [showCriticalPath, setShowCriticalPath] = useState(true);
   const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
   const [showResources, setShowResources] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem("darkMode");
     return saved === "true";
@@ -223,6 +225,8 @@ export default function App() {
             onViewModeChange={setViewMode}
             showCriticalPath={showCriticalPath}
             onToggleCriticalPath={() => setShowCriticalPath(!showCriticalPath)}
+            showDashboard={showDashboard}
+            onToggleDashboard={() => setShowDashboard(!showDashboard)}
             showResources={showResources}
             onToggleResources={() => setShowResources(!showResources)}
             taskCount={tasks.length}
@@ -250,6 +254,8 @@ export default function App() {
                 <h2>No hay tareas</h2>
                 <p>{canEdit ? "Importa el archivo Excel para comenzar." : "El proyecto está vacío."}</p>
               </div>
+            ) : showDashboard ? (
+              <Dashboard tasks={filteredTasks} />
             ) : showResources ? (
               <ResourceView tasks={filteredTasks} />
             ) : (
