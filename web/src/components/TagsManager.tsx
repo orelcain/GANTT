@@ -43,9 +43,12 @@ export function TagsManager({ onClose }: Props) {
     setEditingTag(null);
   };
 
-  const handleDelete = (tagId: string) => {
-    if (confirm("¿Eliminar este tag? Se removerá de todas las tareas.")) {
-      deleteTag(tagId);
+  const handleDelete = async (tagId: string) => {
+    if (!confirm("¿Eliminar este tag? Se removerá de todas las tareas.")) return;
+    try {
+      await deleteTag(tagId);
+    } catch (e) {
+      alert(`No se pudo eliminar el tag: ${String(e)}`);
     }
   };
 

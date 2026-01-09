@@ -10,6 +10,24 @@ import {
 } from "./firestoreTasks";
 import type { Task, TaskId, Tag, Notification, Baseline, Area, Team, Person, Location } from "./types";
 
+function loadFromLocalStorage<T>(key: string, fallback: T): T {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return fallback;
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+const DEFAULT_TAGS: Tag[] = [
+  { id: "urgente", name: "Urgente", color: "#cf222e" },
+  { id: "importante", name: "Importante", color: "#bf8700" },
+  { id: "backend", name: "Backend", color: "#0969da" },
+  { id: "frontend", name: "Frontend", color: "#8250df" },
+  { id: "cliente", name: "Cliente", color: "#1a7f37" },
+];
+
 export type GanttState = {
   tasks: Task[];
   isLoading: boolean;
@@ -43,7 +61,7 @@ export type GanttState = {
   // Gestión de tags
   addTag: (tag: Tag) => void;
   updateTag: (tag: Tag) => void;
-  deleteTag: (tagId: string) => void;
+  deleteTag: (tagId: string) => Promise<void>;
 
   // Gestión de catálogos
   addArea: (area: Area) => void;
@@ -79,37 +97,13 @@ export const useGanttStore = create<GanttState>((set, get) => ({
   tasks: [],
   isLoading: true,
   backend: getFirebaseClients() ? "firebase" : "local",
-  tags: [
-    { id: "urgente", name: "Urgente", color: "#cf222e" },
-    { id: "importante", name: "Importante", color: "#bf8700" },
-    { id: "backend", name: "Backend", color: "#0969da" },
-    { id: "frontend", name: "Frontend", color: "#8250df" },
-    { id: "cliente", name: "Cliente", color: "#1a7f37" },
-  ],
-  notifications: (() => {
-    const saved = localStorage.getItem("gantt-notifications");
-    return saved ? JSON.parse(saved) : [];
-  })(),
-  areas: (() => {
-    const saved = localStorage.getItem("gantt-areas");
-    return saved ? JSON.parse(saved) : [];
-  })(),
-  teams: (() => {
-    const saved = localStorage.getItem("gantt-teams");
-    return saved ? JSON.parse(saved) : [];
-  })(),
-  people: (() => {
-    const saved = localStorage.getItem("gantt-people");
-    return saved ? JSON.parse(saved) : [];
-  })(),
-  locations: (() => {
-    const saved = localStorage.getItem("gantt-locations");
-    return saved ? JSON.parse(saved) : [];
-  })(),
-  baselines: (() => {
-    const saved = localStorage.getItem("gantt-baselines");
-    return saved ? JSON.parse(saved) : [];
-  })(),
+  tags: loadFromLocalStorage<Tag[]>("gantt-tags", DEFAULT_TAGS),
+  notifications: loadFromLocalStorage<Notification[]>("gantt-notifications", []),
+  areas: loadFromLocalStorage<Area[]>("gantt-areas", []),
+  teams: loadFromLocalStorage<Team[]>("gantt-teams", []),
+  people: loadFromLocalStorage<Person[]>("gantt-people", []),
+  locations: loadFromLocalStorage<Location[]>("gantt-locations", []),
+  baselines: loadFromLocalStorage<Baseline[]>("gantt-baselines", []),
   activeBaselineId: localStorage.getItem("gantt-active-baseline"),
 
   _unsub: undefined as undefined | (() => void),
@@ -199,27 +193,59 @@ export const useGanttStore = create<GanttState>((set, get) => ({
   },
 
   addTag: (tag) => {
-    set((state) => ({ tags: [...state.tags, tag] }));
-    localStorage.setItem("gantt-tags", JSON.stringify(get().tags));
+    set((state) => {
+      const tags = [...state.tags, tag];
+      localStorage.setItem("gantt-tags", JSON.stringify(tags));
+      return { tags };
+    });
   },
 
   updateTag: (tag) => {
-    set((state) => ({
-      tags: state.tags.map((t) => (t.id === tag.id ? tag : t)),
-    }));
-    localStorage.setItem("gantt-tags", JSON.stringify(get().tags));
+    set((state) => {
+      const tags = state.tags.map((t) => (t.id === tag.id ? tag : t));
+      localStorage.setItem("gantt-tags", JSON.stringify(tags));
+      return { tags };
+    });
   },
 
-  deleteTag: (tagId) => {
-    set((state) => ({
-      tags: state.tags.filter((t) => t.id !== tagId),
-      // Remover tag de todas las tareas
-      tasks: state.tasks.map((task) => ({
+  deleteTag: async (tagId) => {
+    const state = get();
+    const nextTags = state.tags.filter((t) => t.id !== tagId);
+
+    const tasksToUpdate = state.tasks
+      .filter((task) => (task.tags || []).includes(tagId))
+      .map((task) => ({
         ...task,
-        tags: task.tags?.filter((t) => t !== tagId),
-      })),
+        tags: (task.tags || []).filter((t) => t !== tagId),
+      }));
+
+    set((curr) => ({
+      tags: nextTags,
+      tasks:
+        tasksToUpdate.length === 0
+          ? curr.tasks
+          : curr.tasks.map((task) => {
+              if (!(task.tags || []).includes(tagId)) return task;
+              return { ...task, tags: (task.tags || []).filter((t) => t !== tagId) };
+            }),
     }));
-    localStorage.setItem("gantt-tags", JSON.stringify(get().tags));
+
+    localStorage.setItem("gantt-tags", JSON.stringify(nextTags));
+
+    if (tasksToUpdate.length === 0) return;
+
+    const fb = getFirebaseClients();
+    if (fb) {
+      await Promise.all(
+        tasksToUpdate.map((t) => upsertTaskRemote(fb.db, getProjectKey(), t))
+      );
+      return;
+    }
+
+    await localDb.transaction("rw", localDb.tasks, async () => {
+      await localDb.tasks.bulkPut(tasksToUpdate);
+    });
+    await get().load();
   },
 
   addArea: (area) => {
