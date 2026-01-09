@@ -21,6 +21,7 @@ export type Task = {
   level?: number; // Nivel de indentación (0 = root, 1 = hijo, etc.)
   collapsed?: boolean; // Si está colapsada (solo para tareas con hijos)
   color?: string | null; // Color personalizado (hex)
+  tags?: string[]; // Tags/etiquetas para categorización
 };
 
 export type ProjectRole = "admin" | "editor" | "viewer";
@@ -31,4 +32,10 @@ export type UserRole = ProjectRole | "anon" | "noaccess";
 export type Member = {
   email: string; // lowercase
   role: ProjectRole;
+};
+
+export type Tag = {
+  id: string;
+  name: string;
+  color: string; // hex color
 };

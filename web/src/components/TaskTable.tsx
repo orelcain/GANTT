@@ -50,6 +50,7 @@ type SortDirection = "asc" | "desc";
 export function TaskTable({ tasks, canEdit }: { tasks: Task[]; canEdit: boolean }) {
   const upsertTask = useGanttStore((s) => s.upsertTask);
   const deleteTask = useGanttStore((s) => s.deleteTask);
+  const availableTags = useGanttStore((s) => s.tags);
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
@@ -125,6 +126,7 @@ export function TaskTable({ tasks, canEdit }: { tasks: Task[]; canEdit: boolean 
             <SortableHeader field="progress" style={{ width: 90 }}>%</SortableHeader>
             <SortableHeader field="status" style={{ width: 80 }}>Estado</SortableHeader>
             <SortableHeader field="assignee" style={{ width: 100 }}>Resp.</SortableHeader>
+            <th style={{ width: 120 }}>Tags</th>
             <th style={{ width: 80 }}>Deps</th>
             {canEdit && <th style={{ width: 70 }} />}
           </tr>
@@ -270,6 +272,36 @@ export function TaskTable({ tasks, canEdit }: { tasks: Task[]; canEdit: boolean 
                       {getInitials(t.assignee)}
                     </span>
                     <span style={{ fontSize: 11 }}>{t.assignee}</span>
+                  </div>
+                ) : (
+                  <span style={{ fontSize: 10, color: "var(--color-text-muted)" }}>—</span>
+                )}
+              </td>
+              <td>
+                {t.tags && t.tags.length > 0 ? (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                    {t.tags.map((tagId) => {
+                      const tag = availableTags.find((t) => t.id === tagId);
+                      if (!tag) return null;
+                      return (
+                        <span
+                          key={tagId}
+                          style={{
+                            fontSize: 9,
+                            padding: "2px 6px",
+                            borderRadius: 8,
+                            background: `${tag.color}20`,
+                            color: tag.color,
+                            fontWeight: 500,
+                            border: `1px solid ${tag.color}40`,
+                            whiteSpace: "nowrap",
+                          }}
+                          title={tag.name}
+                        >
+                          {tag.name}
+                        </span>
+                      );
+                    })}
                   </div>
                 ) : (
                   <span style={{ fontSize: 10, color: "var(--color-text-muted)" }}>—</span>

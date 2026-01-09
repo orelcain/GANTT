@@ -8,7 +8,7 @@ import {
   replaceAllTasks,
   upsertTask as upsertTaskRemote,
 } from "./firestoreTasks";
-import type { Task, TaskId } from "./types";
+import type { Task, TaskId, Tag } from "./types";
 
 export type GanttState = {
   tasks: Task[];
@@ -16,6 +16,9 @@ export type GanttState = {
   error?: string;
 
   backend: "local" | "firebase";
+  
+  // Tags globales del proyecto
+  tags: Tag[];
 
   load: () => Promise<void>;
   upsertTask: (task: Task) => Promise<void>;
@@ -23,12 +26,24 @@ export type GanttState = {
   setDependencies: (id: TaskId, deps: TaskId[]) => Promise<void>;
   replaceAll: (tasks: Task[]) => Promise<void>;
   resetAll: () => Promise<void>;
+  
+  // Gestión de tags
+  addTag: (tag: Tag) => void;
+  updateTag: (tag: Tag) => void;
+  deleteTag: (tagId: string) => void;
 };
 
 export const useGanttStore = create<GanttState>((set, get) => ({
   tasks: [],
   isLoading: true,
   backend: getFirebaseClients() ? "firebase" : "local",
+  tags: [
+    { id: "urgente", name: "Urgente", color: "#cf222e" },
+    { id: "importante", name: "Importante", color: "#bf8700" },
+    { id: "backend", name: "Backend", color: "#0969da" },
+    { id: "frontend", name: "Frontend", color: "#8250df" },
+    { id: "cliente", name: "Cliente", color: "#1a7f37" },
+  ],
 
   _unsub: undefined as undefined | (() => void),
 
@@ -114,5 +129,29 @@ export const useGanttStore = create<GanttState>((set, get) => ({
       await localDb.meta.clear();
     });
     await get().load();
+  },
+
+  addTag: (tag) => {
+    set((state) => ({ tags: [...state.tags, tag] }));
+    localStorage.setItem("gantt-tags", JSON.stringify(get().tags));
+  },
+
+  updateTag: (tag) => {
+    set((state) => ({
+      tags: state.tags.map((t) => (t.id === tag.id ? tag : t)),
+    }));
+    localStorage.setItem("gantt-tags", JSON.stringify(get().tags));
+  },
+
+  deleteTag: (tagId) => {
+    set((state) => ({
+      tags: state.tags.filter((t) => t.id !== tagId),
+      // Remover tag de todas las tareas
+      tasks: state.tasks.map((task) => ({
+        ...task,
+        tags: task.tags?.filter((t) => t !== tagId),
+      })),
+    }));
+    localStorage.setItem("gantt-tags", JSON.stringify(get().tags));
   },
 }));

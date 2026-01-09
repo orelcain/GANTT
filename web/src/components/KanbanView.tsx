@@ -56,7 +56,7 @@ function getTaskStatus(task: Task): ColumnId {
 }
 
 export function KanbanView({ tasks, canEdit = false }: Props) {
-  const { upsertTask } = useGanttStore();
+  const { upsertTask, tags: availableTags } = useGanttStore();
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<ColumnId | null>(null);
 
@@ -325,6 +325,37 @@ export function KanbanView({ tasks, canEdit = false }: Props) {
                               transition: "width 0.3s ease",
                             }} />
                           </div>
+                        </div>
+                      )}
+
+                      {/* Tags */}
+                      {task.tags && task.tags.length > 0 && (
+                        <div style={{
+                          display: "flex",
+                          flexWrap: "wrap",
+                          gap: 4,
+                          marginBottom: 8,
+                        }}>
+                          {task.tags.map((tagId) => {
+                            const tag = availableTags.find((t) => t.id === tagId);
+                            if (!tag) return null;
+                            return (
+                              <span
+                                key={tagId}
+                                style={{
+                                  fontSize: 9,
+                                  padding: "2px 6px",
+                                  borderRadius: 8,
+                                  background: `${tag.color}20`,
+                                  color: tag.color,
+                                  fontWeight: 500,
+                                  border: `1px solid ${tag.color}40`,
+                                }}
+                              >
+                                {tag.name}
+                              </span>
+                            );
+                          })}
                         </div>
                       )}
 

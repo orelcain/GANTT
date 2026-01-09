@@ -39,6 +39,7 @@ export default function App() {
   const [filterStatus, setFilterStatus] = useState("");
   const [filterAssignee, setFilterAssignee] = useState("");
   const [filterType, setFilterType] = useState<"" | "task" | "milestone">("");
+  const [filterTags, setFilterTags] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
@@ -77,6 +78,7 @@ export default function App() {
       if (filterStatus && task.status !== filterStatus) return false;
       if (filterAssignee && task.assignee !== filterAssignee) return false;
       if (filterType && task.type !== filterType) return false;
+      if (filterTags.length > 0 && !filterTags.some(tagId => task.tags?.includes(tagId))) return false;
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         return (
@@ -88,7 +90,7 @@ export default function App() {
       }
       return true;
     });
-  }, [tasks, filterStatus, filterAssignee, filterType, searchQuery]);
+  }, [tasks, filterStatus, filterAssignee, filterType, filterTags, searchQuery]);
 
   // Atajos de teclado
   useKeyboardShortcuts([
@@ -181,10 +183,10 @@ export default function App() {
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <h1>ANTARFOOD · Gantt Mantención (Temporada Baja)</h1>
-              <span className="version-badge">v0.4.1</span>
+              <span className="version-badge">v0.10.0</span>
             </div>
             <p style={{ opacity: 0.8, marginTop: 4 }}>
-              Frontend estático (GitHub Pages). Login/roles con Firebase.
+              Dashboard Ejecutivo · Vista Kanban · Exportación PDF/PNG · Recursos · Ruta Crítica
             </p>
           </div>
         </div>
@@ -239,11 +241,13 @@ export default function App() {
             filterStatus={filterStatus}
             filterAssignee={filterAssignee}
             filterType={filterType}
+            filterTags={filterTags}
             uniqueStatuses={uniqueStatuses}
             uniqueAssignees={uniqueAssignees}
             onFilterStatusChange={setFilterStatus}
             onFilterAssigneeChange={setFilterAssignee}
             onFilterTypeChange={setFilterType}
+            onFilterTagsChange={setFilterTags}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
             tasks={filteredTasks}

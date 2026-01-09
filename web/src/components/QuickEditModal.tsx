@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import type { Task } from "../lib/types";
+import { useGanttStore } from "../lib/store";
 
 type Props = {
   task: Task;
@@ -9,6 +10,7 @@ type Props = {
 };
 
 export function QuickEditModal({ task, onSave, onClose }: Props) {
+  const { tags: availableTags } = useGanttStore();
   const [name, setName] = useState(task.name);
   const [start, setStart] = useState(task.start);
   const [end, setEnd] = useState(task.end);
@@ -16,8 +18,15 @@ export function QuickEditModal({ task, onSave, onClose }: Props) {
   const [status, setStatus] = useState(task.status ?? "");
   const [assignee, setAssignee] = useState(task.assignee ?? "");
   const [deps, setDeps] = useState(task.dependencies.join(","));
+  const [selectedTags, setSelectedTags] = useState<string[]>(task.tags || []);
 
   const isMilestone = task.type === "milestone";
+
+  const toggleTag = (tagId: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(tagId) ? prev.filter((t) => t !== tagId) : [...prev, tagId]
+    );
+  };
 
   const handleSave = () => {
     const updates: Partial<Task> = {
@@ -30,6 +39,7 @@ export function QuickEditModal({ task, onSave, onClose }: Props) {
         .split(",")
         .map((s) => s.trim())
         .filter(Boolean),
+      tags: selectedTags,
     };
 
     if (!isMilestone) {
@@ -157,6 +167,54 @@ export function QuickEditModal({ task, onSave, onClose }: Props) {
               placeholder="1, 2, 3"
             />
           </label>
+
+          {/* Tags selector */}
+          <div>
+            <div style={{ fontWeight: 500, marginBottom: 8 }}>Tags</div>
+            {availableTags.length === 0 ? (
+              <div style={{ fontSize: 12, color: "var(--color-fg-muted)", fontStyle: "italic" }}>
+                No hay tags disponibles. Créalos desde el Toolbar.
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {availableTags.map((tag) => {
+                  const isSelected = selectedTags.includes(tag.id);
+                  return (
+                    <button
+                      key={tag.id}
+                      type="button"
+                      onClick={() => toggleTag(tag.id)}
+                      style={{
+                        padding: "6px 12px",
+                        borderRadius: 16,
+                        border: isSelected ? `2px solid ${tag.color}` : "1px solid var(--color-border-default)",
+                        background: isSelected ? `${tag.color}20` : "var(--color-canvas-subtle)",
+                        color: isSelected ? tag.color : "var(--color-fg-default)",
+                        fontSize: 12,
+                        fontWeight: isSelected ? 600 : 400,
+                        cursor: "pointer",
+                        transition: "all 0.2s ease",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: "50%",
+                          background: tag.color,
+                        }}
+                      />
+                      {tag.name}
+                      {isSelected && " ✓"}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
 
         <div style={{ display: "flex", gap: 12, marginTop: 24, justifyContent: "flex-end" }}>
