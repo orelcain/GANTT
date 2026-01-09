@@ -30,6 +30,8 @@ type Props = {
   onToggleResources?: () => void;
   showDashboard?: boolean;
   onToggleDashboard?: () => void;
+  showKanban?: boolean;
+  onToggleKanban?: () => void;
 };
 
 export function Toolbar({
@@ -43,6 +45,8 @@ export function Toolbar({
   onToggleResources,
   showDashboard = false,
   onToggleDashboard,
+  showKanban = false,
+  onToggleKanban,
   taskCount,
   onCreateTask,
   onCreateMilestone,
@@ -102,6 +106,16 @@ export function Toolbar({
             style={{ display: "flex", alignItems: "center", gap: 4 }}
           >
             {showDashboard ? "📊 Ocultar" : "📊 Dashboard"}
+          </button>
+        )}
+        
+        {onToggleKanban && (
+          <button
+            onClick={onToggleKanban}
+            title="Ver tareas en formato Kanban con drag & drop"
+            style={{ display: "flex", alignItems: "center", gap: 4 }}
+          >
+            {showKanban ? "📋 Ocultar" : "📋 Kanban"}
           </button>
         )}
         

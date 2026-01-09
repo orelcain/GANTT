@@ -11,6 +11,7 @@ import { Toolbar } from "./components/Toolbar";
 import { HelpPanel } from "./components/HelpPanel";
 import { ResourceView } from "./components/ResourceView";
 import { Dashboard } from "./components/Dashboard";
+import { KanbanView } from "./components/KanbanView";
 import { useGanttStore } from "./lib/store";
 import type { Task, UserRole } from "./lib/types";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
@@ -28,6 +29,7 @@ export default function App() {
   const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
   const [showResources, setShowResources] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
+  const [showKanban, setShowKanban] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem("darkMode");
     return saved === "true";
@@ -227,6 +229,8 @@ export default function App() {
             onToggleCriticalPath={() => setShowCriticalPath(!showCriticalPath)}
             showDashboard={showDashboard}
             onToggleDashboard={() => setShowDashboard(!showDashboard)}
+            showKanban={showKanban}
+            onToggleKanban={() => setShowKanban(!showKanban)}
             showResources={showResources}
             onToggleResources={() => setShowResources(!showResources)}
             taskCount={tasks.length}
@@ -256,6 +260,8 @@ export default function App() {
               </div>
             ) : showDashboard ? (
               <Dashboard tasks={filteredTasks} />
+            ) : showKanban ? (
+              <KanbanView tasks={filteredTasks} canEdit={canEdit} />
             ) : showResources ? (
               <ResourceView tasks={filteredTasks} />
             ) : (
