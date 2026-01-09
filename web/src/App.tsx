@@ -7,6 +7,7 @@ import { GanttView, type ViewMode } from "./components/GanttView";
 import { QuickEditModal } from "./components/QuickEditModal";
 import { TaskTable } from "./components/TaskTable";
 import { Toolbar } from "./components/Toolbar";
+import { Sidebar } from "./components/Sidebar";
 import { HelpPanel } from "./components/HelpPanel";
 import { ResourceView } from "./components/ResourceView";
 import { Dashboard } from "./components/Dashboard";
@@ -305,28 +306,6 @@ export default function App() {
       ) : (
         <>
           <Toolbar
-            canEdit={canEdit}
-            canManageUsers={canManageUsers}
-            sheetTab={sheetTab}
-            onSheetTabChange={setSheetTab}
-            viewMode={viewMode}
-            onViewModeChange={(mode) => {
-              setHasTouchedViewMode(true);
-              setViewMode(mode);
-            }}
-            showCriticalPath={showCriticalPath}
-            onToggleCriticalPath={() => setShowCriticalPath(!showCriticalPath)}
-            showDashboard={showDashboard}
-            onToggleDashboard={() => setShowDashboard(!showDashboard)}
-            showKanban={showKanban}
-            onToggleKanban={() => setShowKanban(!showKanban)}
-            showCalendar={showCalendar}
-            onToggleCalendar={() => setShowCalendar(!showCalendar)}
-            showResources={showResources}
-            onToggleResources={() => setShowResources(!showResources)}
-            taskCount={tasks.length}
-            onCreateTask={canEdit ? handleCreateTask : undefined}
-            onCreateMilestone={canEdit ? handleCreateMilestone : undefined}
             filterStatus={filterStatus}
             filterAssignee={filterAssignee}
             filterType={filterType}
@@ -339,31 +318,56 @@ export default function App() {
             onFilterTagsChange={setFilterTags}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
-            tasks={filteredTasks}
           />
           <main className="appMain">
-            {isLoading ? (
-              <div className="emptyState">
-                <p>Cargando tareas...</p>
-              </div>
-            ) : tasks.length === 0 ? (
-              <div className="emptyState">
-                <h2>No hay tareas</h2>
-                <p>{canEdit ? "Importa el archivo Excel para comenzar." : "El proyecto está vacío."}</p>
-              </div>
-            ) : showDashboard ? (
-              <Dashboard tasks={filteredTasks} />
-            ) : showKanban ? (
-              <KanbanView tasks={filteredTasks} canEdit={canEdit} />
-            ) : showCalendar ? (
-              <CalendarView 
-                tasks={filteredTasks}
-                onTaskClick={canEdit ? (task) => setTaskToEdit(task) : undefined}
-              />
-            ) : showResources ? (
-              <ResourceView tasks={filteredTasks} />
-            ) : (
-              sheetTab === "settings" ? (
+            <Sidebar
+              sheetTab={sheetTab}
+              onSheetTabChange={setSheetTab}
+              canEdit={canEdit}
+              canManageUsers={canManageUsers}
+              viewMode={viewMode}
+              onViewModeChange={(mode) => {
+                setHasTouchedViewMode(true);
+                setViewMode(mode);
+              }}
+              showCriticalPath={showCriticalPath}
+              onToggleCriticalPath={() => setShowCriticalPath(!showCriticalPath)}
+              showDashboard={showDashboard}
+              setShowDashboard={setShowDashboard}
+              showKanban={showKanban}
+              setShowKanban={setShowKanban}
+              showCalendar={showCalendar}
+              setShowCalendar={setShowCalendar}
+              showResources={showResources}
+              setShowResources={setShowResources}
+              taskCount={tasks.length}
+              tasks={filteredTasks}
+              onCreateTask={canEdit ? handleCreateTask : undefined}
+              onCreateMilestone={canEdit ? handleCreateMilestone : undefined}
+            />
+
+            <div className="appContent">
+              {isLoading ? (
+                <div className="emptyState">
+                  <p>Cargando tareas...</p>
+                </div>
+              ) : tasks.length === 0 ? (
+                <div className="emptyState">
+                  <h2>No hay tareas</h2>
+                  <p>{canEdit ? "Importa el archivo Excel para comenzar." : "El proyecto está vacío."}</p>
+                </div>
+              ) : showDashboard ? (
+                <Dashboard tasks={filteredTasks} />
+              ) : showKanban ? (
+                <KanbanView tasks={filteredTasks} canEdit={canEdit} />
+              ) : showCalendar ? (
+                <CalendarView
+                  tasks={filteredTasks}
+                  onTaskClick={canEdit ? (task) => setTaskToEdit(task) : undefined}
+                />
+              ) : showResources ? (
+                <ResourceView tasks={filteredTasks} />
+              ) : sheetTab === "settings" ? (
                 <SettingsView />
               ) : sheetTab === "tareas" ? (
                 <TaskTable tasks={filteredTasks} canEdit={canEdit} />
@@ -372,13 +376,17 @@ export default function App() {
                   tasks={filteredTasks}
                   viewMode={viewMode}
                   showCriticalPath={showCriticalPath}
-                  onTaskChange={canEdit ? async (task, changes) => {
-                    await upsertTask({ ...task, ...changes });
-                  } : undefined}
+                  onTaskChange={
+                    canEdit
+                      ? async (task, changes) => {
+                          await upsertTask({ ...task, ...changes });
+                        }
+                      : undefined
+                  }
                   onTaskClick={canEdit ? (task) => setTaskToEdit(task) : undefined}
                 />
-              )
-            )}
+              )}
+            </div>
           </main>
         </>
       )}

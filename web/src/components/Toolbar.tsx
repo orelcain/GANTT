@@ -1,27 +1,11 @@
 import { useState } from "react";
-import { ImportExcel } from "./ImportExcel";
-import { MembersAdmin } from "./MembersAdmin";
-import { ExportMenu } from "./ExportMenu";
-import { TagsManager } from "./TagsManager";
-import { BaselineManager } from "./BaselineManager";
-import { useGanttStore } from "../lib/store";
-import type { Task } from "../lib/types";
 
-type ViewMode = "Day" | "Week" | "Month";
+import { useGanttStore } from "../lib/store";
+ 
+
 export type SheetTab = "tareas" | "timeline" | "settings";
 
 type Props = {
-  sheetTab?: SheetTab;
-  onSheetTabChange?: (tab: SheetTab) => void;
-  canEdit: boolean;
-  canManageUsers: boolean;
-  viewMode: ViewMode;
-  onViewModeChange: (mode: ViewMode) => void;
-  showCriticalPath: boolean;
-  onToggleCriticalPath: () => void;
-  taskCount: number;
-  onCreateTask?: () => void;
-  onCreateMilestone?: () => void;
   filterStatus?: string;
   onFilterStatusChange?: (status: string) => void;
   filterAssignee?: string;
@@ -34,37 +18,9 @@ type Props = {
   uniqueAssignees?: string[];
   searchQuery?: string;
   onSearchChange?: (query: string) => void;
-  tasks?: Task[];
-  showResources?: boolean;
-  onToggleResources?: () => void;
-  showDashboard?: boolean;
-  onToggleDashboard?: () => void;
-  showKanban?: boolean;
-  onToggleKanban?: () => void;
-  showCalendar?: boolean;
-  onToggleCalendar?: () => void;
 };
 
 export function Toolbar({
-  sheetTab = "timeline",
-  onSheetTabChange,
-  canEdit,
-  canManageUsers,
-  viewMode,
-  onViewModeChange,
-  showCriticalPath,
-  onToggleCriticalPath,
-  showResources = false,
-  onToggleResources,
-  showDashboard = false,
-  onToggleDashboard,
-  showKanban = false,
-  onToggleKanban,
-  showCalendar = false,
-  onToggleCalendar,
-  taskCount,
-  onCreateTask,
-  onCreateMilestone,
   filterStatus = "",
   onFilterStatusChange,
   filterAssignee = "",
@@ -76,129 +32,14 @@ export function Toolbar({
   uniqueStatuses = [],
   uniqueAssignees = [],
   searchQuery = "",
-  tasks = [],
   onSearchChange,
 }: Props) {
-  const { tags: availableTags, baselines, activeBaselineId } = useGanttStore();
-  const [showTagsManager, setShowTagsManager] = useState(false);
+  const { tags: availableTags } = useGanttStore();
   const [showTagFilter, setShowTagFilter] = useState(false);
-  const [showBaselineManager, setShowBaselineManager] = useState(false);
   const hasActiveFilters = filterStatus || filterAssignee || filterType || searchQuery || filterTags.length > 0;
 
   return (
     <div className="appToolbar">
-      {/* Grupo: navegación (equivalente a hojas) */}
-      {onSheetTabChange && (
-        <div className="toolbarGroup toolbarGroup--nav">
-          <span className="toolbarGroupTitle">Hojas</span>
-          <button
-            className={sheetTab === "tareas" ? "primary" : undefined}
-            onClick={() => onSheetTabChange("tareas")}
-            title="Equivalente a la hoja Tareas"
-          >
-            🧾 Tareas
-          </button>
-          <button
-            className={sheetTab === "timeline" ? "primary" : undefined}
-            onClick={() => onSheetTabChange("timeline")}
-            title="Equivalente a la hoja Timeline"
-          >
-            📈 Timeline
-          </button>
-          <button
-            className={sheetTab === "settings" ? "primary" : undefined}
-            onClick={() => onSheetTabChange("settings")}
-            title="Equivalente a la hoja Settings"
-          >
-            ⚙️ Settings
-          </button>
-        </div>
-      )}
-
-      {/* Grupo: creación */}
-      {canEdit && onCreateTask && (
-        <div className="toolbarGroup toolbarGroup--create">
-          <span className="toolbarGroupTitle">Crear</span>
-          <button onClick={onCreateTask} title="Crear nueva tarea">
-            + Tarea
-          </button>
-          {onCreateMilestone && (
-            <button onClick={onCreateMilestone} title="Crear milestone">
-              ◆ Milestone
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* Grupo: vista */}
-      <div className="toolbarGroup toolbarGroup--view">
-        <span className="toolbarGroupTitle">Vista</span>
-        <select value={viewMode} onChange={(e) => onViewModeChange(e.target.value as ViewMode)}>
-          <option value="Day">Día</option>
-          <option value="Week">Semana</option>
-          <option value="Month">Mes</option>
-        </select>
-      </div>
-
-      {/* Grupo: herramientas */}
-      <div className="toolbarGroup toolbarGroup--tools">
-        <span className="toolbarGroupTitle">Herramientas</span>
-        <label className="toolbarInlineToggle" title="Mostrar/Ocultar ruta crítica">
-          <input type="checkbox" checked={showCriticalPath} onChange={onToggleCriticalPath} />
-          Ruta crítica
-        </label>
-
-        {onToggleDashboard && (
-          <button
-            className={showDashboard ? "primary" : undefined}
-            onClick={onToggleDashboard}
-            title="Ver dashboard con estadísticas del proyecto"
-          >
-            📊 Dashboard
-          </button>
-        )}
-
-        {onToggleKanban && (
-          <button
-            className={showKanban ? "primary" : undefined}
-            onClick={onToggleKanban}
-            title="Ver tareas en formato Kanban con drag & drop"
-          >
-            📋 Kanban
-          </button>
-        )}
-
-        {onToggleCalendar && (
-          <button
-            className={showCalendar ? "primary" : undefined}
-            onClick={onToggleCalendar}
-            title="Ver tareas en formato Calendario mensual"
-          >
-            📅 Calendario
-          </button>
-        )}
-
-        {onToggleResources && (
-          <button
-            className={showResources ? "primary" : undefined}
-            onClick={onToggleResources}
-            title="Ver distribución de tareas por persona"
-          >
-            👥 Recursos
-          </button>
-        )}
-
-        <button onClick={() => setShowBaselineManager(true)} title="Gestionar baselines del proyecto" style={{ position: "relative" }}>
-          📊 Baseline
-          {activeBaselineId && (
-            <span className="toolbarPill" title="Cantidad de baselines">
-              {baselines.length}
-            </span>
-          )}
-        </button>
-      </div>
-
-      {/* Grupo: filtros (siempre en segunda fila) */}
       <div className="toolbarGroup toolbarGroup--filters">
         <span className="toolbarGroupTitle">Filtros</span>
 
@@ -350,47 +191,6 @@ export function Toolbar({
           </button>
         )}
       </div>
-
-      {/* Bloque derecho */}
-      <div
-        className="toolbarGroup toolbarGroup--actions"
-        style={{
-          marginLeft: "auto",
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          flexWrap: "wrap",
-          justifyContent: "flex-end",
-          minWidth: 0,
-        }}
-      >
-        <span style={{ fontSize: 11, color: "var(--color-text-muted)" }}>
-          {taskCount} {taskCount === 1 ? "tarea" : "tareas"}
-        </span>
-
-        {/* Botón gestión de tags */}
-        <button
-          onClick={() => setShowTagsManager(true)}
-          style={{
-            fontSize: 12,
-            padding: "6px 12px",
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-          }}
-          title="Gestionar tags"
-        >
-          🏷️ Tags
-        </button>
-
-        <ExportMenu tasks={tasks} />
-
-        {canEdit && <ImportExcel />}
-        {canManageUsers && <MembersAdmin enabled />}
-      </div>
-
-      {showTagsManager && <TagsManager onClose={() => setShowTagsManager(false)} />}
-      {showBaselineManager && <BaselineManager onClose={() => setShowBaselineManager(false)} />}
     </div>
   );
 }
