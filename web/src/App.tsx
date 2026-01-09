@@ -12,6 +12,7 @@ import { HelpPanel } from "./components/HelpPanel";
 import { ResourceView } from "./components/ResourceView";
 import { Dashboard } from "./components/Dashboard";
 import { KanbanView } from "./components/KanbanView";
+import { NotificationCenter } from "./components/NotificationCenter";
 import { useGanttStore } from "./lib/store";
 import type { Task, UserRole } from "./lib/types";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
@@ -22,6 +23,8 @@ export default function App() {
   const isLoading = useGanttStore((s) => s.isLoading);
   const error = useGanttStore((s) => s.error);
   const upsertTask = useGanttStore((s) => s.upsertTask);
+  const addNotification = useGanttStore((s) => s.addNotification);
+  const notifications = useGanttStore((s) => s.notifications);
 
   const [role, setRole] = useState<UserRole>("anon");
   const [viewMode, setViewMode] = useState<ViewMode>("Day");
@@ -46,6 +49,55 @@ export default function App() {
     if (role === "anon" || role === "noaccess") return;
     void load();
   }, [load, role]);
+
+  // Generador automático de notificaciones de deadline
+  useEffect(() => {
+    if (tasks.length === 0) return;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const threeDaysFromNow = new Date(today);
+    threeDaysFromNow.setDate(today.getDate() + 3);
+
+    tasks.forEach((task) => {
+      // Solo tareas no completadas y que no sean milestones
+      if (task.type === "milestone" || task.progress >= 100) return;
+
+      const endDate = new Date(task.end);
+      endDate.setHours(0, 0, 0, 0);
+
+      // Si la tarea vence en los próximos 3 días
+      if (endDate <= threeDaysFromNow && endDate >= today) {
+        // Verificar si ya existe una notificación para esta tarea
+        const existingNotification = notifications.find(
+          (n) => n.type === "deadline" && n.taskId === task.id && !n.read
+        );
+
+        if (!existingNotification) {
+          const diffDays = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+          let message = "";
+          
+          if (diffDays === 0) {
+            message = "Vence hoy";
+          } else if (diffDays === 1) {
+            message = "Vence mañana";
+          } else {
+            message = `Vence en ${diffDays} días`;
+          }
+
+          addNotification({
+            id: `deadline-${task.id}-${Date.now()}`,
+            type: "deadline",
+            taskId: task.id,
+            taskName: task.name,
+            message: `${message} (${task.progress}% completado)`,
+            timestamp: new Date().toISOString(),
+            read: false,
+          });
+        }
+      }
+    });
+  }, [tasks, notifications, addNotification]);
 
   useEffect(() => {
     localStorage.setItem("darkMode", String(darkMode));
@@ -183,14 +235,15 @@ export default function App() {
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <h1>ANTARFOOD · Gantt Mantención (Temporada Baja)</h1>
-              <span className="version-badge">v0.12.0</span>
+              <span className="version-badge">v0.13.0</span>
             </div>
             <p style={{ opacity: 0.8, marginTop: 4 }}>
-              Dashboard · Kanban · Tags · Comentarios · Exportación · Recursos · Ruta Crítica
+              Dashboard · Kanban · Tags · Comentarios · Notificaciones · Exportación · Recursos · Ruta Crítica
             </p>
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <NotificationCenter />
           <button
             onClick={() => setDarkMode(!darkMode)}
             className="theme-toggle"

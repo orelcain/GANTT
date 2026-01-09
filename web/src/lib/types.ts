@@ -48,3 +48,15 @@ export type Comment = {
   content: string;
   timestamp: string; // ISO timestamp
 };
+
+export type NotificationType = "deadline" | "mention" | "update";
+
+export type Notification = {
+  id: string;
+  type: NotificationType;
+  taskId?: TaskId;
+  taskName?: string;
+  message: string;
+  timestamp: string; // ISO timestamp
+  read: boolean;
+};

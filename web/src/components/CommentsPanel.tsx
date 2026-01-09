@@ -8,7 +8,7 @@ type Props = {
 };
 
 export function CommentsPanel({ task, currentUser = "Usuario Anónimo" }: Props) {
-  const { upsertTask } = useGanttStore();
+  const { upsertTask, addNotification } = useGanttStore();
   const [newComment, setNewComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -32,6 +32,26 @@ export function CommentsPanel({ task, currentUser = "Usuario Anónimo" }: Props)
 
     const updatedComments = [...(task.comments || []), comment];
     await upsertTask({ ...task, comments: updatedComments });
+
+    // Detectar menciones y crear notificaciones
+    const mentionRegex = /@(\w+)/g;
+    const mentions = [...newComment.matchAll(mentionRegex)].map(match => match[1]);
+    
+    mentions.forEach(mentionedUser => {
+      // No notificar al usuario que está comentando
+      if (mentionedUser !== currentUser) {
+        addNotification({
+          id: `mention-${task.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          type: "mention",
+          taskId: task.id,
+          taskName: task.name,
+          message: `${currentUser} te mencionó: "${newComment.trim().substring(0, 50)}${newComment.trim().length > 50 ? '...' : ''}"`,
+          timestamp: new Date().toISOString(),
+          read: false,
+        });
+      }
+    });
+
     setNewComment("");
     setIsSubmitting(false);
   };

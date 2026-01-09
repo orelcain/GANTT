@@ -8,7 +8,7 @@ import {
   replaceAllTasks,
   upsertTask as upsertTaskRemote,
 } from "./firestoreTasks";
-import type { Task, TaskId, Tag } from "./types";
+import type { Task, TaskId, Tag, Notification } from "./types";
 
 export type GanttState = {
   tasks: Task[];
@@ -19,6 +19,9 @@ export type GanttState = {
   
   // Tags globales del proyecto
   tags: Tag[];
+  
+  // Notificaciones
+  notifications: Notification[];
 
   load: () => Promise<void>;
   upsertTask: (task: Task) => Promise<void>;
@@ -31,6 +34,12 @@ export type GanttState = {
   addTag: (tag: Tag) => void;
   updateTag: (tag: Tag) => void;
   deleteTag: (tagId: string) => void;
+  
+  // Gestión de notificaciones
+  addNotification: (notification: Notification) => void;
+  markAsRead: (notificationId: string) => void;
+  markAllAsRead: () => void;
+  clearNotifications: () => void;
 };
 
 export const useGanttStore = create<GanttState>((set, get) => ({
@@ -44,6 +53,10 @@ export const useGanttStore = create<GanttState>((set, get) => ({
     { id: "frontend", name: "Frontend", color: "#8250df" },
     { id: "cliente", name: "Cliente", color: "#1a7f37" },
   ],
+  notifications: (() => {
+    const saved = localStorage.getItem("gantt-notifications");
+    return saved ? JSON.parse(saved) : [];
+  })(),
 
   _unsub: undefined as undefined | (() => void),
 
@@ -153,5 +166,33 @@ export const useGanttStore = create<GanttState>((set, get) => ({
       })),
     }));
     localStorage.setItem("gantt-tags", JSON.stringify(get().tags));
+  },
+
+  addNotification: (notification) => {
+    set((state) => ({
+      notifications: [notification, ...state.notifications],
+    }));
+    localStorage.setItem("gantt-notifications", JSON.stringify(get().notifications));
+  },
+
+  markAsRead: (notificationId) => {
+    set((state) => ({
+      notifications: state.notifications.map((n) =>
+        n.id === notificationId ? { ...n, read: true } : n
+      ),
+    }));
+    localStorage.setItem("gantt-notifications", JSON.stringify(get().notifications));
+  },
+
+  markAllAsRead: () => {
+    set((state) => ({
+      notifications: state.notifications.map((n) => ({ ...n, read: true })),
+    }));
+    localStorage.setItem("gantt-notifications", JSON.stringify(get().notifications));
+  },
+
+  clearNotifications: () => {
+    set({ notifications: [] });
+    localStorage.removeItem("gantt-notifications");
   },
 }));
