@@ -182,9 +182,11 @@ export const useGanttStore = create<GanttState>((set, get) => ({
   },
 
   resetAll: async () => {
-    // MVP: reset solo en modo local
     const fb = getFirebaseClients();
-    if (fb) throw new Error("Reset remoto no implementado (Firestore).");
+    if (fb) {
+      await replaceAllTasks(fb.db, getProjectKey(), []);
+      return;
+    }
     await localDb.transaction("rw", localDb.tasks, localDb.meta, async () => {
       await localDb.tasks.clear();
       await localDb.meta.clear();
@@ -249,78 +251,117 @@ export const useGanttStore = create<GanttState>((set, get) => ({
   },
 
   addArea: (area) => {
-    set((state) => ({ areas: [...state.areas, area] }));
-    localStorage.setItem("gantt-areas", JSON.stringify(get().areas));
+    set((state) => {
+      const areas = [...state.areas, area];
+      localStorage.setItem("gantt-areas", JSON.stringify(areas));
+      return { areas };
+    });
   },
   updateArea: (area) => {
-    set((state) => ({ areas: state.areas.map((a) => (a.id === area.id ? area : a)) }));
-    localStorage.setItem("gantt-areas", JSON.stringify(get().areas));
+    set((state) => {
+      const areas = state.areas.map((a) => (a.id === area.id ? area : a));
+      localStorage.setItem("gantt-areas", JSON.stringify(areas));
+      return { areas };
+    });
   },
   deleteArea: (areaId) => {
-    set((state) => ({ areas: state.areas.filter((a) => a.id !== areaId) }));
-    localStorage.setItem("gantt-areas", JSON.stringify(get().areas));
+    set((state) => {
+      const areas = state.areas.filter((a) => a.id !== areaId);
+      localStorage.setItem("gantt-areas", JSON.stringify(areas));
+      return { areas };
+    });
   },
 
   addTeam: (team) => {
-    set((state) => ({ teams: [...state.teams, team] }));
-    localStorage.setItem("gantt-teams", JSON.stringify(get().teams));
+    set((state) => {
+      const teams = [...state.teams, team];
+      localStorage.setItem("gantt-teams", JSON.stringify(teams));
+      return { teams };
+    });
   },
   updateTeam: (team) => {
-    set((state) => ({ teams: state.teams.map((t) => (t.id === team.id ? team : t)) }));
-    localStorage.setItem("gantt-teams", JSON.stringify(get().teams));
+    set((state) => {
+      const teams = state.teams.map((t) => (t.id === team.id ? team : t));
+      localStorage.setItem("gantt-teams", JSON.stringify(teams));
+      return { teams };
+    });
   },
   deleteTeam: (teamId) => {
-    set((state) => ({ teams: state.teams.filter((t) => t.id !== teamId) }));
-    localStorage.setItem("gantt-teams", JSON.stringify(get().teams));
+    set((state) => {
+      const teams = state.teams.filter((t) => t.id !== teamId);
+      localStorage.setItem("gantt-teams", JSON.stringify(teams));
+      return { teams };
+    });
   },
 
   addPerson: (person) => {
-    set((state) => ({ people: [...state.people, person] }));
-    localStorage.setItem("gantt-people", JSON.stringify(get().people));
+    set((state) => {
+      const people = [...state.people, person];
+      localStorage.setItem("gantt-people", JSON.stringify(people));
+      return { people };
+    });
   },
   updatePerson: (person) => {
-    set((state) => ({ people: state.people.map((p) => (p.id === person.id ? person : p)) }));
-    localStorage.setItem("gantt-people", JSON.stringify(get().people));
+    set((state) => {
+      const people = state.people.map((p) => (p.id === person.id ? person : p));
+      localStorage.setItem("gantt-people", JSON.stringify(people));
+      return { people };
+    });
   },
   deletePerson: (personId) => {
-    set((state) => ({ people: state.people.filter((p) => p.id !== personId) }));
-    localStorage.setItem("gantt-people", JSON.stringify(get().people));
+    set((state) => {
+      const people = state.people.filter((p) => p.id !== personId);
+      localStorage.setItem("gantt-people", JSON.stringify(people));
+      return { people };
+    });
   },
 
   addLocation: (location) => {
-    set((state) => ({ locations: [...state.locations, location] }));
-    localStorage.setItem("gantt-locations", JSON.stringify(get().locations));
+    set((state) => {
+      const locations = [...state.locations, location];
+      localStorage.setItem("gantt-locations", JSON.stringify(locations));
+      return { locations };
+    });
   },
   updateLocation: (location) => {
-    set((state) => ({ locations: state.locations.map((l) => (l.id === location.id ? location : l)) }));
-    localStorage.setItem("gantt-locations", JSON.stringify(get().locations));
+    set((state) => {
+      const locations = state.locations.map((l) => (l.id === location.id ? location : l));
+      localStorage.setItem("gantt-locations", JSON.stringify(locations));
+      return { locations };
+    });
   },
   deleteLocation: (locationId) => {
-    set((state) => ({ locations: state.locations.filter((l) => l.id !== locationId) }));
-    localStorage.setItem("gantt-locations", JSON.stringify(get().locations));
+    set((state) => {
+      const locations = state.locations.filter((l) => l.id !== locationId);
+      localStorage.setItem("gantt-locations", JSON.stringify(locations));
+      return { locations };
+    });
   },
 
   addNotification: (notification) => {
-    set((state) => ({
-      notifications: [notification, ...state.notifications],
-    }));
-    localStorage.setItem("gantt-notifications", JSON.stringify(get().notifications));
+    set((state) => {
+      const notifications = [notification, ...state.notifications];
+      localStorage.setItem("gantt-notifications", JSON.stringify(notifications));
+      return { notifications };
+    });
   },
 
   markAsRead: (notificationId) => {
-    set((state) => ({
-      notifications: state.notifications.map((n) =>
+    set((state) => {
+      const notifications = state.notifications.map((n) =>
         n.id === notificationId ? { ...n, read: true } : n
-      ),
-    }));
-    localStorage.setItem("gantt-notifications", JSON.stringify(get().notifications));
+      );
+      localStorage.setItem("gantt-notifications", JSON.stringify(notifications));
+      return { notifications };
+    });
   },
 
   markAllAsRead: () => {
-    set((state) => ({
-      notifications: state.notifications.map((n) => ({ ...n, read: true })),
-    }));
-    localStorage.setItem("gantt-notifications", JSON.stringify(get().notifications));
+    set((state) => {
+      const notifications = state.notifications.map((n) => ({ ...n, read: true }));
+      localStorage.setItem("gantt-notifications", JSON.stringify(notifications));
+      return { notifications };
+    });
   },
 
   clearNotifications: () => {
@@ -335,17 +376,24 @@ export const useGanttStore = create<GanttState>((set, get) => ({
       timestamp: new Date().toISOString(),
       tasks: JSON.parse(JSON.stringify(get().tasks)), // Deep copy
     };
-    set((state) => ({ baselines: [...state.baselines, baseline] }));
-    localStorage.setItem("gantt-baselines", JSON.stringify(get().baselines));
+    set((state) => {
+      const baselines = [...state.baselines, baseline];
+      localStorage.setItem("gantt-baselines", JSON.stringify(baselines));
+      return { baselines };
+    });
   },
 
   deleteBaseline: (baselineId) => {
     const state = get();
-    set((state) => ({
-      baselines: state.baselines.filter((b) => b.id !== baselineId),
-      activeBaselineId: state.activeBaselineId === baselineId ? null : state.activeBaselineId,
-    }));
-    localStorage.setItem("gantt-baselines", JSON.stringify(get().baselines));
+    set((state) => {
+      const baselines = state.baselines.filter((b) => b.id !== baselineId);
+      const activeBaselineId = state.activeBaselineId === baselineId ? null : state.activeBaselineId;
+      localStorage.setItem("gantt-baselines", JSON.stringify(baselines));
+      if (state.activeBaselineId === baselineId) {
+        localStorage.removeItem("gantt-active-baseline");
+      }
+      return { baselines, activeBaselineId };
+    });
     if (state.activeBaselineId === baselineId) {
       localStorage.removeItem("gantt-active-baseline");
     }

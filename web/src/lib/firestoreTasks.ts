@@ -2,6 +2,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDocs,
   getDoc,
   onSnapshot,
   setDoc,
@@ -53,11 +54,33 @@ export async function deleteTaskById(db: Firestore, projectKey: string, id: Task
 }
 
 export async function replaceAllTasks(db: Firestore, projectKey: string, tasks: Task[]) {
-  // Nota: esto NO borra tareas que ya existían y no están en el nuevo set.
-  // Para MVP es ok; si quieres sincronización exacta, agregamos un barrido paginado.
-  const batch = writeBatch(db);
-  for (const t of tasks) {
-    batch.set(taskDoc(db, projectKey, t.id), t, { merge: true });
+  // Reemplazo exacto:
+  // - Borra las tareas existentes que no están en el nuevo set
+  // - Escribe/actualiza las tareas del nuevo set
+  // Nota: Firestore limita batches a 500 operaciones.
+
+  const incomingIds = new Set(tasks.map((t) => t.id));
+  const existingSnap = await getDocs(tasksCollection(db, projectKey));
+  const toDelete = existingSnap.docs
+    .map((d) => d.id)
+    .filter((id) => !incomingIds.has(id));
+
+  const ops: Array<{ kind: "delete" | "set"; id: string; task?: Task }> = [
+    ...toDelete.map((id) => ({ kind: "delete" as const, id })),
+    ...tasks.map((t) => ({ kind: "set" as const, id: t.id, task: t })),
+  ];
+
+  const maxOpsPerBatch = 450;
+  for (let i = 0; i < ops.length; i += maxOpsPerBatch) {
+    const slice = ops.slice(i, i + maxOpsPerBatch);
+    const batch = writeBatch(db);
+    for (const op of slice) {
+      if (op.kind === "delete") {
+        batch.delete(taskDoc(db, projectKey, op.id));
+      } else {
+        batch.set(taskDoc(db, projectKey, op.id), op.task!, { merge: true });
+      }
+    }
+    await batch.commit();
   }
-  await batch.commit();
 }
