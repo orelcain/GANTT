@@ -261,9 +261,31 @@ export function GanttView({
   };
 
   const handleFitView = () => {
-    // Intenta ajustar la vista automáticamente
-    if (ganttInstanceRef.current) {
-      ganttInstanceRef.current.refresh(visibleTasks);
+    if (visibleTasks.length === 0) return;
+
+    // Selección simple: mientras más largo el rango, más "alejado" el modo.
+    let minDate: Date | null = null;
+    let maxDate: Date | null = null;
+
+    for (const t of visibleTasks) {
+      const start = new Date(t.start);
+      const end = new Date(t.type === "milestone" ? t.start : t.end);
+      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) continue;
+
+      if (!minDate || start < minDate) minDate = start;
+      if (!maxDate || end > maxDate) maxDate = end;
+    }
+
+    if (!minDate || !maxDate) return;
+
+    const diffDays = Math.ceil((maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    const nextMode: ViewMode = diffDays > 180 ? "Month" : diffDays > 45 ? "Week" : "Day";
+
+    setCurrentViewMode(nextMode);
+
+    // Llevar el scroll al inicio para evitar “pantalla en blanco” a la derecha.
+    if (wrapperRef.current) {
+      wrapperRef.current.scrollLeft = 0;
     }
   };
 
