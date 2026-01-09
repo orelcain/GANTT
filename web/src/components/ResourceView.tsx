@@ -2,6 +2,7 @@ import { useMemo } from "react";
 
 
 import type { Task } from "../lib/types";
+import { useGanttStore } from "../lib/store";
 
 type Props = {
   tasks: Task[];
@@ -17,11 +18,17 @@ type ResourceData = {
 };
 
 export function ResourceView({ tasks }: Props) {
+  const people = useGanttStore((s) => s.people);
+  const peopleById = useMemo(() => new Map(people.map((p) => [p.id, p])), [people]);
+
   const resourceData = useMemo(() => {
     const byAssignee = new Map<string, Task[]>();
 
     tasks.forEach((task) => {
-      const assignee = task.assignee || "Sin asignar";
+      const assigneeName = task.assigneeId
+        ? (peopleById.get(task.assigneeId)?.name ?? task.assignee ?? "")
+        : (task.assignee ?? "");
+      const assignee = assigneeName || "Sin asignar";
       if (!byAssignee.has(assignee)) {
         byAssignee.set(assignee, []);
       }
@@ -45,7 +52,7 @@ export function ResourceView({ tasks }: Props) {
     });
 
     return resources.sort((a, b) => b.taskCount - a.taskCount);
-  }, [tasks]);
+  }, [tasks, peopleById]);
 
   return (
     <div style={{ height: "100%", overflow: "auto", padding: 12 }}>

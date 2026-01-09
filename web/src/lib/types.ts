@@ -2,13 +2,38 @@ export type TaskId = string;
 
 export type TaskType = "task" | "milestone";
 
+export type Area = {
+  id: string;
+  name: string;
+};
+
+export type Team = {
+  id: string;
+  name: string;
+};
+
+export type Person = {
+  id: string;
+  name: string;
+  email?: string | null;
+};
+
+export type Location = {
+  id: string;
+  name: string;
+};
+
 export type Task = {
   id: TaskId;
   name: string;
   projectId?: string | number | null;
   phaseId?: string | number | null;
   assignee?: string | null;
+  assigneeId?: string | null;
   team?: string | null;
+  teamId?: string | null;
+  areaId?: string | null;
+  locationId?: string | null;
   status?: string | null;
   progress: number; // 0..100
   start: string; // ISO date (YYYY-MM-DD)

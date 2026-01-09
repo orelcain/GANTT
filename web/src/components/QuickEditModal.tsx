@@ -12,7 +12,7 @@ type Props = {
 };
 
 export function QuickEditModal({ task, onSave, onClose, currentUser }: Props) {
-  const { tags: availableTags } = useGanttStore();
+  const { tags: availableTags, people, teams, areas, locations } = useGanttStore();
   const [activeTab, setActiveTab] = useState<"details" | "comments">("details");
   const [name, setName] = useState(task.name);
   const [start, setStart] = useState(task.start);
@@ -20,6 +20,21 @@ export function QuickEditModal({ task, onSave, onClose, currentUser }: Props) {
   const [progress, setProgress] = useState(task.progress);
   const [status, setStatus] = useState(task.status ?? "");
   const [assignee, setAssignee] = useState(task.assignee ?? "");
+  const [assigneeId, setAssigneeId] = useState<string>(() => {
+    if (task.assigneeId) return task.assigneeId;
+    if (!task.assignee) return "";
+    const match = people.find((p) => p.name.trim().toLowerCase() === task.assignee!.trim().toLowerCase());
+    return match?.id ?? "";
+  });
+  const [team, setTeam] = useState(task.team ?? "");
+  const [teamId, setTeamId] = useState<string>(() => {
+    if (task.teamId) return task.teamId;
+    if (!task.team) return "";
+    const match = teams.find((t) => t.name.trim().toLowerCase() === task.team!.trim().toLowerCase());
+    return match?.id ?? "";
+  });
+  const [areaId, setAreaId] = useState(task.areaId ?? "");
+  const [locationId, setLocationId] = useState(task.locationId ?? "");
   const [deps, setDeps] = useState(task.dependencies.join(","));
   const [selectedTags, setSelectedTags] = useState<string[]>(task.tags || []);
 
@@ -38,6 +53,11 @@ export function QuickEditModal({ task, onSave, onClose, currentUser }: Props) {
       progress: isMilestone ? 100 : progress,
       status: status || null,
       assignee: assignee || null,
+      assigneeId: assigneeId || null,
+      team: team || null,
+      teamId: teamId || null,
+      areaId: areaId || null,
+      locationId: locationId || null,
       dependencies: deps
         .split(",")
         .map((s) => s.trim())
@@ -206,13 +226,93 @@ export function QuickEditModal({ task, onSave, onClose, currentUser }: Props) {
 
           <label>
             <div style={{ fontWeight: 500, marginBottom: 6 }}>Responsable</div>
-            <input
-              value={assignee}
-              onChange={(e) => setAssignee(e.target.value)}
-              style={{ width: "100%" }}
-              placeholder="Nombre del responsable"
-            />
+            {people.length > 0 ? (
+              <select
+                value={assigneeId}
+                onChange={(e) => {
+                  const nextId = e.target.value;
+                  setAssigneeId(nextId);
+                  const p = people.find((x) => x.id === nextId);
+                  setAssignee(p?.name ?? "");
+                }}
+                style={{ width: "100%" }}
+              >
+                <option value="">Sin asignar</option>
+                {people.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                value={assignee}
+                onChange={(e) => setAssignee(e.target.value)}
+                style={{ width: "100%" }}
+                placeholder="Nombre del responsable"
+              />
+            )}
           </label>
+
+          <label>
+            <div style={{ fontWeight: 500, marginBottom: 6 }}>Equipo</div>
+            {teams.length > 0 ? (
+              <select
+                value={teamId}
+                onChange={(e) => {
+                  const nextId = e.target.value;
+                  setTeamId(nextId);
+                  const t = teams.find((x) => x.id === nextId);
+                  setTeam(t?.name ?? "");
+                }}
+                style={{ width: "100%" }}
+              >
+                <option value="">Sin equipo</option>
+                {teams.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                value={team}
+                onChange={(e) => setTeam(e.target.value)}
+                style={{ width: "100%" }}
+                placeholder="Equipo o cuadrilla"
+              />
+            )}
+          </label>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+            <label>
+              <div style={{ fontWeight: 500, marginBottom: 6 }}>Área</div>
+              <select value={areaId} onChange={(e) => setAreaId(e.target.value)} style={{ width: "100%" }}>
+                <option value="">Sin área</option>
+                {areas.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              <div style={{ fontWeight: 500, marginBottom: 6 }}>Ubicación</div>
+              <select
+                value={locationId}
+                onChange={(e) => setLocationId(e.target.value)}
+                style={{ width: "100%" }}
+              >
+                <option value="">Sin ubicación</option>
+                {locations.map((l) => (
+                  <option key={l.id} value={l.id}>
+                    {l.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
 
           <label>
             <div style={{ fontWeight: 500, marginBottom: 6 }}>Dependencias (IDs separados por coma)</div>

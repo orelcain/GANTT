@@ -31,6 +31,10 @@ export default function App() {
   const upsertTask = useGanttStore((s) => s.upsertTask);
   const addNotification = useGanttStore((s) => s.addNotification);
   const notifications = useGanttStore((s) => s.notifications);
+  const people = useGanttStore((s) => s.people);
+  const teams = useGanttStore((s) => s.teams);
+  const areas = useGanttStore((s) => s.areas);
+  const locations = useGanttStore((s) => s.locations);
 
   const [role, setRole] = useState<UserRole>("anon");
   const [viewMode, setViewMode] = useState<ViewMode>("Week");
@@ -51,9 +55,21 @@ export default function App() {
   // Filtros
   const [filterStatus, setFilterStatus] = useState("");
   const [filterAssignee, setFilterAssignee] = useState("");
+  const [filterPersonId, setFilterPersonId] = useState("");
+  const [filterTeamId, setFilterTeamId] = useState("");
+  const [filterAreaId, setFilterAreaId] = useState("");
+  const [filterLocationId, setFilterLocationId] = useState("");
   const [filterType, setFilterType] = useState<"" | "task" | "milestone">("");
   const [filterTags, setFilterTags] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+
+  const [focusTaskId, setFocusTaskId] = useState<string | null>(null);
+  const [focusTaskNonce, setFocusTaskNonce] = useState(0);
+
+  const peopleById = useMemo(() => new Map(people.map((p) => [p.id, p])), [people]);
+  const teamsById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
+  const areasById = useMemo(() => new Map(areas.map((a) => [a.id, a])), [areas]);
+  const locationsById = useMemo(() => new Map(locations.map((l) => [l.id, l])), [locations]);
 
   useEffect(() => {
     if (role === "anon" || role === "noaccess") return;
@@ -139,20 +155,56 @@ export default function App() {
     return tasks.filter(task => {
       if (filterStatus && task.status !== filterStatus) return false;
       if (filterAssignee && task.assignee !== filterAssignee) return false;
+      if (filterPersonId) {
+        const selectedName = peopleById.get(filterPersonId)?.name;
+        const matchesId = task.assigneeId === filterPersonId;
+        const matchesText = selectedName ? task.assignee === selectedName : false;
+        if (!matchesId && !matchesText) return false;
+      }
+      if (filterTeamId) {
+        const selectedName = teamsById.get(filterTeamId)?.name;
+        const matchesId = task.teamId === filterTeamId;
+        const matchesText = selectedName ? task.team === selectedName : false;
+        if (!matchesId && !matchesText) return false;
+      }
+      if (filterAreaId && task.areaId !== filterAreaId) return false;
+      if (filterLocationId && task.locationId !== filterLocationId) return false;
       if (filterType && task.type !== filterType) return false;
       if (filterTags.length > 0 && !filterTags.some(tagId => task.tags?.includes(tagId))) return false;
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
+        const assigneeName = task.assigneeId ? (peopleById.get(task.assigneeId)?.name ?? "") : (task.assignee ?? "");
+        const teamName = task.teamId ? (teamsById.get(task.teamId)?.name ?? "") : (task.team ?? "");
+        const areaName = task.areaId ? (areasById.get(task.areaId)?.name ?? "") : "";
+        const locationName = task.locationId ? (locationsById.get(task.locationId)?.name ?? "") : "";
         return (
           task.name.toLowerCase().includes(query) ||
-          task.assignee?.toLowerCase().includes(query) ||
+          assigneeName.toLowerCase().includes(query) ||
+          teamName.toLowerCase().includes(query) ||
+          areaName.toLowerCase().includes(query) ||
+          locationName.toLowerCase().includes(query) ||
           task.status?.toLowerCase().includes(query) ||
           String(task.phaseId || "").toLowerCase().includes(query)
         );
       }
       return true;
     });
-  }, [tasks, filterStatus, filterAssignee, filterType, filterTags, searchQuery]);
+  }, [
+    tasks,
+    filterStatus,
+    filterAssignee,
+    filterPersonId,
+    filterTeamId,
+    filterAreaId,
+    filterLocationId,
+    filterType,
+    filterTags,
+    searchQuery,
+    peopleById,
+    teamsById,
+    areasById,
+    locationsById,
+  ]);
 
   // Auto-elegir vista (Día/Semana/Mes) para que el Timeline no quede enorme por defecto.
   useEffect(() => {
@@ -342,6 +394,17 @@ export default function App() {
     setTaskToEdit(newMilestone);
   };
 
+  const handleFocusTask = (taskId: string) => {
+    setShowDashboard(false);
+    setShowKanban(false);
+    setShowCalendar(false);
+    setShowResources(false);
+    setSheetTab("timeline");
+
+    setFocusTaskId(taskId);
+    setFocusTaskNonce((n) => n + 1);
+  };
+
   return (
     <div className="app">
       <header className="appHeader">
@@ -392,12 +455,20 @@ export default function App() {
           <Toolbar
             filterStatus={filterStatus}
             filterAssignee={filterAssignee}
+            filterPersonId={filterPersonId}
+            filterTeamId={filterTeamId}
+            filterAreaId={filterAreaId}
+            filterLocationId={filterLocationId}
             filterType={filterType}
             filterTags={filterTags}
             uniqueStatuses={uniqueStatuses}
             uniqueAssignees={uniqueAssignees}
             onFilterStatusChange={setFilterStatus}
             onFilterAssigneeChange={setFilterAssignee}
+            onFilterPersonIdChange={setFilterPersonId}
+            onFilterTeamIdChange={setFilterTeamId}
+            onFilterAreaIdChange={setFilterAreaId}
+            onFilterLocationIdChange={setFilterLocationId}
             onFilterTypeChange={setFilterType}
             onFilterTagsChange={setFilterTags}
             searchQuery={searchQuery}
@@ -458,7 +529,7 @@ export default function App() {
               ) : sheetTab === "settings" ? (
                 <SettingsView />
               ) : sheetTab === "tareas" ? (
-                <TaskTable tasks={filteredTasks} canEdit={canEdit} />
+                <TaskTable tasks={filteredTasks} canEdit={canEdit} onFocusTask={handleFocusTask} />
               ) : (
                 <Splitter
                   storageKey="gantt-timeline-splitter"
@@ -467,7 +538,7 @@ export default function App() {
                   minRightWidth={520}
                   leftPanel={
                     <div style={{ height: "100%", overflow: "auto", background: "var(--color-surface)" }}>
-                      <TaskTable tasks={timelineTasks} canEdit={canEdit} />
+                      <TaskTable tasks={timelineTasks} canEdit={canEdit} onFocusTask={handleFocusTask} />
                     </div>
                   }
                   rightPanel={
@@ -477,6 +548,8 @@ export default function App() {
                         viewMode={viewMode}
                         showCriticalPath={showCriticalPath}
                         clampRange={timelineClampRange}
+                        focusTaskId={focusTaskId}
+                        focusTaskNonce={focusTaskNonce}
                         onTaskChange={
                           canEdit
                             ? async (task, changes) => {
@@ -502,7 +575,7 @@ export default function App() {
             await upsertTask({ ...taskToEdit, ...updates });
           }}
           onClose={() => setTaskToEdit(null)}
-          currentUser={filterAssignee || "Usuario"}
+          currentUser={filterAssignee || (filterPersonId ? (peopleById.get(filterPersonId)?.name ?? "Usuario") : "Usuario")}
         />
       )}
 

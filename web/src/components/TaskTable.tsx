@@ -47,10 +47,20 @@ function getTaskStatus(task: Task): string {
 type SortField = "name" | "start" | "end" | "progress" | "status" | "assignee";
 type SortDirection = "asc" | "desc";
 
-export function TaskTable({ tasks, canEdit }: { tasks: Task[]; canEdit: boolean }) {
+export function TaskTable({
+  tasks,
+  canEdit,
+  onFocusTask,
+}: {
+  tasks: Task[];
+  canEdit: boolean;
+  onFocusTask?: (taskId: string) => void;
+}) {
   const upsertTask = useGanttStore((s) => s.upsertTask);
   const deleteTask = useGanttStore((s) => s.deleteTask);
   const availableTags = useGanttStore((s) => s.tags);
+  const people = useGanttStore((s) => s.people);
+  const peopleById = useMemo(() => new Map(people.map((p) => [p.id, p])), [people]);
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
@@ -138,6 +148,9 @@ export function TaskTable({ tasks, canEdit }: { tasks: Task[]; canEdit: boolean 
             const isMilestone = t.type === "milestone";
             const hasChildren = tasksWithChildren.has(t.id);
             const taskStatus = getTaskStatus(t);
+            const assigneeName = t.assigneeId
+              ? (peopleById.get(t.assigneeId)?.name ?? t.assignee ?? "")
+              : (t.assignee ?? "");
             
             return (
               <tr key={t.id}>
@@ -189,7 +202,27 @@ export function TaskTable({ tasks, canEdit }: { tasks: Task[]; canEdit: boolean 
                     {level > 0 && !hasChildren && (
                       <span style={{ opacity: 0.4, marginLeft: hasChildren ? 0 : 16 }}>└</span>
                     )}
-                    {t.name}
+                    {onFocusTask ? (
+                      <button
+                        type="button"
+                        onClick={() => onFocusTask(t.id)}
+                        title="Ver en timeline"
+                        style={{
+                          border: "none",
+                          background: "transparent",
+                          padding: 0,
+                          margin: 0,
+                          font: "inherit",
+                          color: "inherit",
+                          cursor: "pointer",
+                          textAlign: "left",
+                        }}
+                      >
+                        {t.name}
+                      </button>
+                    ) : (
+                      t.name
+                    )}
                   </div>
                 </td>
                 <td>{t.start}</td>
@@ -263,16 +296,16 @@ export function TaskTable({ tasks, canEdit }: { tasks: Task[]; canEdit: boolean 
                 )}
               </td>
               <td>
-                {t.assignee ? (
+                {assigneeName ? (
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     <span 
                       className="avatar" 
-                      style={{ background: getAvatarColor(t.assignee) }}
-                      title={t.assignee}
+                      style={{ background: getAvatarColor(assigneeName) }}
+                      title={assigneeName}
                     >
-                      {getInitials(t.assignee)}
+                      {getInitials(assigneeName)}
                     </span>
-                    <span style={{ fontSize: 11 }}>{t.assignee}</span>
+                    <span style={{ fontSize: 11 }}>{assigneeName}</span>
                   </div>
                 ) : (
                   <span style={{ fontSize: 10, color: "var(--color-text-muted)" }}>—</span>

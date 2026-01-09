@@ -10,6 +10,14 @@ type Props = {
   onFilterStatusChange?: (status: string) => void;
   filterAssignee?: string;
   onFilterAssigneeChange?: (assignee: string) => void;
+  filterPersonId?: string;
+  onFilterPersonIdChange?: (personId: string) => void;
+  filterTeamId?: string;
+  onFilterTeamIdChange?: (teamId: string) => void;
+  filterAreaId?: string;
+  onFilterAreaIdChange?: (areaId: string) => void;
+  filterLocationId?: string;
+  onFilterLocationIdChange?: (locationId: string) => void;
   filterType?: "" | "task" | "milestone";
   onFilterTypeChange?: (type: "" | "task" | "milestone") => void;
   filterTags?: string[];
@@ -25,6 +33,14 @@ export function Toolbar({
   onFilterStatusChange,
   filterAssignee = "",
   onFilterAssigneeChange,
+  filterPersonId = "",
+  onFilterPersonIdChange,
+  filterTeamId = "",
+  onFilterTeamIdChange,
+  filterAreaId = "",
+  onFilterAreaIdChange,
+  filterLocationId = "",
+  onFilterLocationIdChange,
   filterType = "",
   onFilterTypeChange,
   filterTags = [],
@@ -34,9 +50,18 @@ export function Toolbar({
   searchQuery = "",
   onSearchChange,
 }: Props) {
-  const { tags: availableTags } = useGanttStore();
+  const { tags: availableTags, areas, teams, people, locations } = useGanttStore();
   const [showTagFilter, setShowTagFilter] = useState(false);
-  const hasActiveFilters = filterStatus || filterAssignee || filterType || searchQuery || filterTags.length > 0;
+  const hasActiveFilters =
+    filterStatus ||
+    filterAssignee ||
+    filterPersonId ||
+    filterTeamId ||
+    filterAreaId ||
+    filterLocationId ||
+    filterType ||
+    searchQuery ||
+    filterTags.length > 0;
 
   return (
     <div className="appToolbar">
@@ -70,16 +95,77 @@ export function Toolbar({
           </select>
         )}
 
-        {onFilterAssigneeChange && uniqueAssignees.length > 0 && (
+        {onFilterAreaIdChange && areas.length > 0 && (
           <select
-            value={filterAssignee}
-            onChange={(e) => onFilterAssigneeChange(e.target.value)}
+            value={filterAreaId}
+            onChange={(e) => onFilterAreaIdChange(e.target.value)}
             style={{ fontSize: 12, minWidth: 140 }}
           >
+            <option value="">Todas las áreas</option>
+            {areas.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name}
+              </option>
+            ))}
+          </select>
+        )}
+
+        {onFilterTeamIdChange && teams.length > 0 && (
+          <select
+            value={filterTeamId}
+            onChange={(e) => onFilterTeamIdChange(e.target.value)}
+            style={{ fontSize: 12, minWidth: 140 }}
+          >
+            <option value="">Todos los equipos</option>
+            {teams.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
+          </select>
+        )}
+
+        {people.length > 0 && onFilterPersonIdChange ? (
+          <select
+            value={filterPersonId}
+            onChange={(e) => onFilterPersonIdChange(e.target.value)}
+            style={{ fontSize: 12, minWidth: 160 }}
+          >
             <option value="">Todos los responsables</option>
-            {uniqueAssignees.map((a) => (
-              <option key={a} value={a}>
-                {a}
+            {people.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        ) : (
+          onFilterAssigneeChange &&
+          uniqueAssignees.length > 0 && (
+            <select
+              value={filterAssignee}
+              onChange={(e) => onFilterAssigneeChange(e.target.value)}
+              style={{ fontSize: 12, minWidth: 160 }}
+            >
+              <option value="">Todos los responsables</option>
+              {uniqueAssignees.map((a) => (
+                <option key={a} value={a}>
+                  {a}
+                </option>
+              ))}
+            </select>
+          )
+        )}
+
+        {onFilterLocationIdChange && locations.length > 0 && (
+          <select
+            value={filterLocationId}
+            onChange={(e) => onFilterLocationIdChange(e.target.value)}
+            style={{ fontSize: 12, minWidth: 150 }}
+          >
+            <option value="">Todas las ubicaciones</option>
+            {locations.map((l) => (
+              <option key={l.id} value={l.id}>
+                {l.name}
               </option>
             ))}
           </select>
@@ -181,6 +267,10 @@ export function Toolbar({
               onFilterTypeChange?.("");
               onFilterStatusChange?.("");
               onFilterAssigneeChange?.("");
+              onFilterPersonIdChange?.("");
+              onFilterTeamIdChange?.("");
+              onFilterAreaIdChange?.("");
+              onFilterLocationIdChange?.("");
               onSearchChange?.("");
               onFilterTagsChange?.([]);
             }}

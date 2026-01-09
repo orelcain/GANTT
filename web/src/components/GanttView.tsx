@@ -13,6 +13,8 @@ type Props = {
   viewMode?: ViewMode;
   showCriticalPath?: boolean;
   clampRange?: { start: string; end: string };
+  focusTaskId?: string | null;
+  focusTaskNonce?: number;
   onTaskChange?: (task: Task, changes: { start?: string; end?: string; progress?: number }) => void;
   onTaskClick?: (task: Task) => void;
 };
@@ -29,6 +31,8 @@ export function GanttView({
   viewMode = "Day",
   showCriticalPath = false,
   clampRange,
+  focusTaskId,
+  focusTaskNonce,
   onTaskChange,
   onTaskClick,
 }: Props) {
@@ -37,7 +41,12 @@ export function GanttView({
   const ganttInstanceRef = useRef<any>(null);
   const [currentViewMode, setCurrentViewMode] = useState<ViewMode>(viewMode);
   
-  const { activeBaselineId, getTaskVariance } = useGanttStore();
+  const { activeBaselineId, getTaskVariance, people, teams, areas, locations } = useGanttStore();
+
+  const peopleById = useMemo(() => new Map(people.map((p) => [p.id, p])), [people]);
+  const teamsById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
+  const areasById = useMemo(() => new Map(areas.map((a) => [a.id, a])), [areas]);
+  const locationsById = useMemo(() => new Map(locations.map((l) => [l.id, l])), [locations]);
 
   // Filtrar tareas visibles (excluir hijos de padres colapsados)
   const visibleTasks = useMemo(() => {
@@ -139,6 +148,17 @@ export function GanttView({
         const duration = !isMilestone 
           ? Math.ceil((new Date(originalTask.end).getTime() - new Date(originalTask.start).getTime()) / (1000 * 60 * 60 * 24)) + 1
           : 0;
+
+        const assigneeName = originalTask.assigneeId
+          ? (peopleById.get(originalTask.assigneeId)?.name ?? originalTask.assignee ?? "")
+          : (originalTask.assignee ?? "");
+        const teamName = originalTask.teamId
+          ? (teamsById.get(originalTask.teamId)?.name ?? originalTask.team ?? "")
+          : (originalTask.team ?? "");
+        const areaName = originalTask.areaId ? (areasById.get(originalTask.areaId)?.name ?? "") : "";
+        const locationName = originalTask.locationId
+          ? (locationsById.get(originalTask.locationId)?.name ?? "")
+          : "";
         
         return `
           <div class="tooltip-header">
@@ -180,10 +200,28 @@ export function GanttView({
                 </span>
               </div>
             ` : ""}
-            ${originalTask.assignee ? `
+            ${assigneeName ? `
               <div class="tooltip-row">
                 <span class="tooltip-label">Responsable:</span>
-                <span class="tooltip-value">👤 ${originalTask.assignee}</span>
+                <span class="tooltip-value">👤 ${assigneeName}</span>
+              </div>
+            ` : ""}
+            ${teamName ? `
+              <div class="tooltip-row">
+                <span class="tooltip-label">Equipo:</span>
+                <span class="tooltip-value">👥 ${teamName}</span>
+              </div>
+            ` : ""}
+            ${areaName ? `
+              <div class="tooltip-row">
+                <span class="tooltip-label">Área:</span>
+                <span class="tooltip-value">📍 ${areaName}</span>
+              </div>
+            ` : ""}
+            ${locationName ? `
+              <div class="tooltip-row">
+                <span class="tooltip-label">Ubicación:</span>
+                <span class="tooltip-value">🏭 ${locationName}</span>
               </div>
             ` : ""}
             ${originalTask.dependencies.length > 0 ? `
@@ -266,6 +304,17 @@ export function GanttView({
   useEffect(() => {
     setCurrentViewMode(viewMode);
   }, [viewMode]);
+
+  // Navegación: centrar timeline en una tarea
+  useEffect(() => {
+    if (!focusTaskId) return;
+    const gantt = ganttInstanceRef.current;
+    if (!gantt || typeof gantt.set_scroll_position !== "function") return;
+
+    const t = visibleTasks.find((x) => x.id === focusTaskId);
+    if (!t) return;
+    gantt.set_scroll_position(t.start);
+  }, [focusTaskId, focusTaskNonce, visibleTasks]);
 
   const handleZoomIn = () => {
     const currentIndex = VIEW_MODES.indexOf(currentViewMode);
