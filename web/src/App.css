@@ -203,7 +203,10 @@ body {
   padding: 0 16px;
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
-  height: var(--toolbar-height);
+  min-height: var(--toolbar-height);
+  height: auto;
+  flex-wrap: wrap;
+  row-gap: 6px;
   flex-shrink: 0;
   font-size: var(--font-size-sm);
 }
@@ -213,6 +216,11 @@ body {
   display: flex;
   overflow: hidden;
   background: var(--color-bg);
+}
+
+.appMain > * {
+  min-width: 0;
+  min-height: 0;
 }
 
 .splitView {

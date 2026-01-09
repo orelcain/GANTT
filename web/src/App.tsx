@@ -29,7 +29,8 @@ export default function App() {
   const notifications = useGanttStore((s) => s.notifications);
 
   const [role, setRole] = useState<UserRole>("anon");
-  const [viewMode, setViewMode] = useState<ViewMode>("Day");
+  const [viewMode, setViewMode] = useState<ViewMode>("Week");
+  const [hasTouchedViewMode, setHasTouchedViewMode] = useState(false);
   const [showCriticalPath, setShowCriticalPath] = useState(true);
   const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
   const [showResources, setShowResources] = useState(false);
@@ -147,6 +148,30 @@ export default function App() {
       return true;
     });
   }, [tasks, filterStatus, filterAssignee, filterType, filterTags, searchQuery]);
+
+  // Auto-elegir vista (Día/Semana/Mes) para que el Timeline no quede enorme por defecto.
+  useEffect(() => {
+    if (hasTouchedViewMode) return;
+    if (tasks.length === 0) return;
+
+    let minDate: Date | null = null;
+    let maxDate: Date | null = null;
+
+    for (const t of filteredTasks) {
+      const start = new Date(t.start);
+      const end = new Date(t.type === "milestone" ? t.start : t.end);
+      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) continue;
+
+      if (!minDate || start < minDate) minDate = start;
+      if (!maxDate || end > maxDate) maxDate = end;
+    }
+
+    if (!minDate || !maxDate) return;
+
+    const diffDays = Math.ceil((maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    const recommended: ViewMode = diffDays > 180 ? "Month" : diffDays > 45 ? "Week" : "Day";
+    setViewMode(recommended);
+  }, [filteredTasks, hasTouchedViewMode, tasks.length]);
 
   // Atajos de teclado
   useKeyboardShortcuts([
@@ -285,7 +310,10 @@ export default function App() {
             sheetTab={sheetTab}
             onSheetTabChange={setSheetTab}
             viewMode={viewMode}
-            onViewModeChange={setViewMode}
+            onViewModeChange={(mode) => {
+              setHasTouchedViewMode(true);
+              setViewMode(mode);
+            }}
             showCriticalPath={showCriticalPath}
             onToggleCriticalPath={() => setShowCriticalPath(!showCriticalPath)}
             showDashboard={showDashboard}

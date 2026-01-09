@@ -87,7 +87,7 @@ export function Toolbar({
 
   return (
     <div className="appToolbar">
-      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", minWidth: 0 }}>
         {onSheetTabChange && (
           <>
             <span style={{ fontSize: 13, color: "#586069" }}>Hojas:</span>
@@ -138,7 +138,7 @@ export function Toolbar({
         </select>
       </div>
 
-      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", minWidth: 0 }}>
         <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, cursor: "pointer" }}>
           <input
             type="checkbox"
@@ -217,7 +217,7 @@ export function Toolbar({
       </div>
 
       {/* Filtros */}
-      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", minWidth: 0 }}>
         <div style={{ width: 1, height: 24, background: "#e1e4e8", margin: "0 4px" }} />
         
         <span style={{ fontSize: 11, color: "#8993a4", textTransform: "uppercase", letterSpacing: "0.5px" }}>
@@ -373,31 +373,42 @@ export function Toolbar({
         )}
       </div>
 
-      <div style={{ flex: 1 }} />
-
-      <span style={{ fontSize: 11, color: "var(--color-text-muted)" }}>
-        {taskCount} {taskCount === 1 ? "tarea" : "tareas"}
-      </span>
-
-      {/* Botón gestión de tags */}
-      <button
-        onClick={() => setShowTagsManager(true)}
+      {/* Bloque derecho */}
+      <div
         style={{
-          fontSize: 12,
-          padding: "6px 12px",
+          marginLeft: "auto",
           display: "flex",
           alignItems: "center",
-          gap: 6,
+          gap: 8,
+          flexWrap: "wrap",
+          justifyContent: "flex-end",
+          minWidth: 0,
         }}
-        title="Gestionar tags"
       >
-        🏷️ Tags
-      </button>
+        <span style={{ fontSize: 11, color: "var(--color-text-muted)" }}>
+          {taskCount} {taskCount === 1 ? "tarea" : "tareas"}
+        </span>
 
-      <ExportMenu tasks={tasks} />
-      
-      {canEdit && <ImportExcel />}
-      {canManageUsers && <MembersAdmin enabled />}
+        {/* Botón gestión de tags */}
+        <button
+          onClick={() => setShowTagsManager(true)}
+          style={{
+            fontSize: 12,
+            padding: "6px 12px",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+          }}
+          title="Gestionar tags"
+        >
+          🏷️ Tags
+        </button>
+
+        <ExportMenu tasks={tasks} />
+
+        {canEdit && <ImportExcel />}
+        {canManageUsers && <MembersAdmin enabled />}
+      </div>
 
       {showTagsManager && <TagsManager onClose={() => setShowTagsManager(false)} />}
       {showBaselineManager && <BaselineManager onClose={() => setShowBaselineManager(false)} />}
