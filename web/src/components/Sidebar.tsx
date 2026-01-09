@@ -21,6 +21,10 @@ type Props = {
   // Timeline
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
+  timelineRange: "recomendado" | "todo" | "3m" | "6m" | "12m";
+  onTimelineRangeChange: (range: "recomendado" | "todo" | "3m" | "6m" | "12m") => void;
+  timelineShownCount: number;
+  timelineTotalCount: number;
   showCriticalPath: boolean;
   onToggleCriticalPath: () => void;
 
@@ -48,6 +52,10 @@ export function Sidebar({
   canManageUsers,
   viewMode,
   onViewModeChange,
+  timelineRange,
+  onTimelineRangeChange,
+  timelineShownCount,
+  timelineTotalCount,
   showCriticalPath,
   onToggleCriticalPath,
   showDashboard,
@@ -154,6 +162,26 @@ export function Sidebar({
             <option value="Month">Mes</option>
           </select>
         </label>
+
+        <label className="sidebarField">
+          <span>Rango</span>
+          <select
+            value={timelineRange}
+            onChange={(e) => onTimelineRangeChange(e.target.value as Props["timelineRange"])}
+          >
+            <option value="recomendado">Recomendado</option>
+            <option value="3m">Últimos 3 meses</option>
+            <option value="6m">Últimos 6 meses</option>
+            <option value="12m">Últimos 12 meses</option>
+            <option value="todo">Todo (sin límite)</option>
+          </select>
+        </label>
+
+        {timelineRange !== "todo" && timelineShownCount !== timelineTotalCount && (
+          <div className="sidebarMeta">
+            Mostrando {timelineShownCount} de {timelineTotalCount} tareas
+          </div>
+        )}
 
         <label className="sidebarToggle" title="Mostrar/Ocultar ruta crítica">
           <input type="checkbox" checked={showCriticalPath} onChange={onToggleCriticalPath} />

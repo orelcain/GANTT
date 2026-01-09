@@ -20,6 +20,8 @@ import { useGanttStore } from "./lib/store";
 import type { Task, UserRole } from "./lib/types";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 
+type TimelineRange = "recomendado" | "todo" | "3m" | "6m" | "12m";
+
 export default function App() {
   const load = useGanttStore((s) => s.load);
   const tasks = useGanttStore((s) => s.tasks);
@@ -39,6 +41,7 @@ export default function App() {
   const [showKanban, setShowKanban] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [sheetTab, setSheetTab] = useState<SheetTab>("timeline");
+  const [timelineRange, setTimelineRange] = useState<TimelineRange>("recomendado");
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem("darkMode");
     return saved === "true";
@@ -173,6 +176,76 @@ export default function App() {
     const recommended: ViewMode = diffDays > 180 ? "Month" : diffDays > 45 ? "Week" : "Day";
     setViewMode(recommended);
   }, [filteredTasks, hasTouchedViewMode, tasks.length]);
+
+  const { timelineTasks, timelineShownCount, timelineTotalCount } = useMemo(() => {
+    const totalCount = filteredTasks.length;
+
+    if (timelineRange === "todo") {
+      return { timelineTasks: filteredTasks, timelineShownCount: totalCount, timelineTotalCount: totalCount };
+    }
+
+    let minDate: Date | null = null;
+    let maxDate: Date | null = null;
+
+    for (const t of filteredTasks) {
+      const start = new Date(t.start);
+      const end = new Date(t.type === "milestone" ? t.start : t.end);
+      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) continue;
+
+      if (!minDate || start < minDate) minDate = start;
+      if (!maxDate || end > maxDate) maxDate = end;
+    }
+
+    if (!minDate || !maxDate) {
+      return { timelineTasks: filteredTasks, timelineShownCount: totalCount, timelineTotalCount: totalCount };
+    }
+
+    const dayMs = 1000 * 60 * 60 * 24;
+    const diffDays = Math.ceil((maxDate.getTime() - minDate.getTime()) / dayMs) + 1;
+
+    const monthsFromRange = (range: TimelineRange): number => {
+      if (range === "3m") return 3;
+      if (range === "6m") return 6;
+      if (range === "12m") return 12;
+      // recomendado
+      if (diffDays > 365 * 3) return 12;
+      if (diffDays > 365 * 2) return 12;
+      if (diffDays > 365) return 6;
+      if (diffDays > 180) return 3;
+      return 0;
+    };
+
+    const months = monthsFromRange(timelineRange);
+    if (months === 0) {
+      return { timelineTasks: filteredTasks, timelineShownCount: totalCount, timelineTotalCount: totalCount };
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const twoYearsMs = 365 * 2 * dayMs;
+    let endAnchor = maxDate;
+    if (endAnchor.getTime() - today.getTime() > twoYearsMs) endAnchor = today;
+    if (today.getTime() - endAnchor.getTime() > twoYearsMs) endAnchor = today;
+
+    const windowEnd = new Date(endAnchor);
+    const windowStart = new Date(endAnchor);
+    windowStart.setMonth(windowStart.getMonth() - months);
+
+    const withinWindow = filteredTasks.filter((t) => {
+      const start = new Date(t.start);
+      const end = new Date(t.type === "milestone" ? t.start : t.end);
+      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return false;
+      return end >= windowStart && start <= windowEnd;
+    });
+
+    // Si por el filtro quedan 0, no ocultar todo: vuelve a mostrar todo.
+    if (withinWindow.length === 0) {
+      return { timelineTasks: filteredTasks, timelineShownCount: totalCount, timelineTotalCount: totalCount };
+    }
+
+    return { timelineTasks: withinWindow, timelineShownCount: withinWindow.length, timelineTotalCount: totalCount };
+  }, [filteredTasks, timelineRange]);
 
   // Atajos de teclado
   useKeyboardShortcuts([
@@ -330,6 +403,10 @@ export default function App() {
                 setHasTouchedViewMode(true);
                 setViewMode(mode);
               }}
+              timelineRange={timelineRange}
+              onTimelineRangeChange={setTimelineRange}
+              timelineShownCount={timelineShownCount}
+              timelineTotalCount={timelineTotalCount}
               showCriticalPath={showCriticalPath}
               onToggleCriticalPath={() => setShowCriticalPath(!showCriticalPath)}
               showDashboard={showDashboard}
@@ -373,7 +450,7 @@ export default function App() {
                 <TaskTable tasks={filteredTasks} canEdit={canEdit} />
               ) : (
                 <GanttView
-                  tasks={filteredTasks}
+                  tasks={timelineTasks}
                   viewMode={viewMode}
                   showCriticalPath={showCriticalPath}
                   onTaskChange={
