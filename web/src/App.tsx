@@ -237,7 +237,7 @@ export default function App() {
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <h1>ANTARFOOD · Gantt Mantención (Temporada Baja)</h1>
-              <span className="version-badge">v0.15.0</span>
+              <span className="version-badge">v0.15.1</span>
             </div>
             <p style={{ opacity: 0.8, marginTop: 4 }}>
               Dashboard · Kanban · Calendario · Tags · Comentarios · Notificaciones · Baselines · Exportación · Recursos · Ruta Crítica

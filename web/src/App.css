@@ -595,7 +595,12 @@ button.danger:hover:not(:disabled) {
   50% { opacity: 0.8; }
 }
 
-.is-critical .bar {
+/* Ruta crítica (custom_class ahora es un solo token con sufijo --critical) */
+.task-completed--critical .bar,
+.task-in-progress--critical .bar,
+.task-pending--critical .bar,
+.task-overdue--critical .bar,
+.milestone--critical .bar {
   stroke: var(--color-critical) !important;
   stroke-width: 3px;
   filter: drop-shadow(0 3px 6px rgba(255, 86, 48, 0.4));
@@ -623,9 +628,13 @@ button.danger:hover:not(:disabled) {
   font-weight: 600;
 }
 
-/* Colores personalizados */
-.custom-color .bar {
-  fill: attr(data-color) !important;
+/* Colores personalizados (pendiente de aplicar fill dinámico desde JS si se usa) */
+.task-completed--custom .bar,
+.task-in-progress--custom .bar,
+.task-pending--custom .bar,
+.task-overdue--custom .bar,
+.milestone--custom .bar {
+  /* Sin cambios por ahora: la implementación previa usaba attr(), que no es confiable para SVG. */
 }
 
 /* Tooltips enriquecidos - estilo GanttPRO */

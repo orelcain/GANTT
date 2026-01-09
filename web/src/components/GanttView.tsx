@@ -68,17 +68,13 @@ export function GanttView({
     const data = visibleTasks.map((t) => {
       const isMilestone = t.type === "milestone";
       const taskStatus = getTaskStatus(t);
-      const classes = [`task-${taskStatus}`];
-      
-      if (showCriticalPath && criticalIds.has(t.id)) {
-        classes.push("is-critical");
-      }
-      if (isMilestone) {
-        classes.push("milestone");
-      }
-      if (t.color) {
-        classes.push("custom-color");
-      }
+
+      // frappe-gantt hace `element.classList.add(custom_class)`.
+      // classList.add NO acepta tokens con espacios; por eso custom_class debe ser 1 solo token.
+      const baseClass = isMilestone ? "milestone" : `task-${taskStatus}`;
+      const criticalSuffix = showCriticalPath && criticalIds.has(t.id) ? "--critical" : "";
+      const customSuffix = t.color ? "--custom" : "";
+      const customClass = `${baseClass}${criticalSuffix}${customSuffix}`;
 
       return {
         id: t.id,
@@ -87,7 +83,7 @@ export function GanttView({
         end: isMilestone ? t.start : t.end, // Milestones duran 1 día
         progress: isMilestone ? 100 : t.progress,
         dependencies: t.dependencies.join(","),
-        custom_class: classes.join(" "),
+        custom_class: customClass,
       };
     });
 
