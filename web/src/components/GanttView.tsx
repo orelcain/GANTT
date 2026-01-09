@@ -68,16 +68,16 @@ export function GanttView({
     const data = visibleTasks.map((t) => {
       const isMilestone = t.type === "milestone";
       const taskStatus = getTaskStatus(t);
-      let customClass = `task-${taskStatus}`;
+      const classes = [`task-${taskStatus}`];
       
       if (showCriticalPath && criticalIds.has(t.id)) {
-        customClass += " is-critical";
+        classes.push("is-critical");
       }
       if (isMilestone) {
-        customClass += " milestone";
+        classes.push("milestone");
       }
       if (t.color) {
-        customClass += " custom-color";
+        classes.push("custom-color");
       }
 
       return {
@@ -87,7 +87,7 @@ export function GanttView({
         end: isMilestone ? t.start : t.end, // Milestones duran 1 día
         progress: isMilestone ? 100 : t.progress,
         dependencies: t.dependencies.join(","),
-        custom_class: customClass.trim(),
+        custom_class: classes.join(" "),
       };
     });
 

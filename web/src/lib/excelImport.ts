@@ -72,17 +72,28 @@ export async function importFromExcel(file: File): Promise<Task[]> {
   if (colDue == null) throw new Error("No se detectó la columna 'Due Date Helper'.");
 
   const tasks: Task[] = [];
+  let skippedRows = 0;
+  let totalRows = 0;
 
   ws.eachRow({ includeEmpty: false }, (row, rowNumber) => {
     if (rowNumber === 1) return;
-
+    
+    totalRows++;
     const values = (row.values as unknown[]).slice(1);
     const name = String(values[colTask] ?? "").trim();
-    if (!name) return;
+    if (!name) {
+      skippedRows++;
+      console.log(`⚠️ Fila ${rowNumber}: Sin nombre de tarea, omitida`);
+      return;
+    }
 
     const startIso = toIsoDate(colStart == null ? null : values[colStart]);
     const dueIso = toIsoDate(values[colDue]);
-    if (!dueIso) return;
+    if (!dueIso) {
+      skippedRows++;
+      console.log(`⚠️ Fila ${rowNumber} "${name}": Sin fecha de fin, omitida`);
+      return;
+    }
 
     const startFinal = startIso ?? dueIso;
 
@@ -108,6 +119,8 @@ export async function importFromExcel(file: File): Promise<Task[]> {
       dependencies: [],
     });
   });
+
+  console.log(`📊 Importación: ${tasks.length} tareas importadas, ${skippedRows} filas omitidas de ${totalRows} totales`);
 
   if (!tasks.length) throw new Error("No se encontraron tareas importables en 'Gantt_Helper'.");
 
