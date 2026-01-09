@@ -290,7 +290,11 @@ export function GanttView({
   };
 
   return (
-    <div ref={wrapperRef} style={{ padding: 16, overflow: "auto", position: "relative" }} data-gantt-container>
+    <div
+      ref={wrapperRef}
+      style={{ padding: 16, overflow: "auto", position: "relative", minWidth: 0, maxWidth: "100%" }}
+      data-gantt-container
+    >
       {/* Controles de zoom - estilo GanttPRO */}
       <div className="zoom-controls">
         <button 

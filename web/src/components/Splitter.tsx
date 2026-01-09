@@ -75,6 +75,7 @@ export function Splitter({
         height: "100%",
         overflow: "hidden",
         position: "relative",
+        minWidth: 0,
         userSelect: isDragging ? "none" : "auto",
       }}
     >
@@ -85,6 +86,7 @@ export function Splitter({
           height: "100%",
           overflow: "hidden",
           position: "relative",
+          minWidth: 0,
         }}
       >
         {leftPanel}
@@ -137,6 +139,7 @@ export function Splitter({
           height: "100%",
           overflow: "hidden",
           position: "relative",
+          minWidth: 0,
         }}
       >
         {rightPanel}
