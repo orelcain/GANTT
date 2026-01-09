@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 // @ts-expect-error frappe-gantt no trae tipos TS en el paquete
 import Gantt from "frappe-gantt";
 
@@ -15,6 +15,13 @@ type Props = {
   onTaskClick?: (task: Task) => void;
 };
 
+const VIEW_MODES: ViewMode[] = ["Day", "Week", "Month"];
+const VIEW_MODE_LABELS: Record<ViewMode, string> = {
+  Day: "Día",
+  Week: "Semana",
+  Month: "Mes"
+};
+
 export function GanttView({
   tasks,
   viewMode = "Day",
@@ -24,6 +31,7 @@ export function GanttView({
 }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const ganttInstanceRef = useRef<any>(null);
+  const [currentViewMode, setCurrentViewMode] = useState<ViewMode>(viewMode);
 
   // Filtrar tareas visibles (excluir hijos de padres colapsados)
   const visibleTasks = useMemo(() => {
@@ -80,32 +88,89 @@ export function GanttView({
     });
 
     const gantt = new Gantt(containerRef.current, data, {
-      view_mode: viewMode,
+      view_mode: currentViewMode,
       language: "es",
       bar_height: 20,
       bar_corner_radius: 3,
       padding: 18,
       
-      // Tooltips personalizados
+      // Tooltips enriquecidos - estilo GanttPRO
       custom_popup_html: (task: any) => {
         const originalTask = visibleTasks.find((t) => t.id === task.id);
         if (!originalTask) return task.name;
         
         const isMilestone = originalTask.type === "milestone";
+        const taskStatus = getTaskStatus(originalTask);
+        const statusIcons: Record<string, string> = {
+          completed: "✓",
+          "in-progress": "⏳",
+          overdue: "⚠",
+          pending: "○"
+        };
+        const statusLabels: Record<string, string> = {
+          completed: "Completado",
+          "in-progress": "En Progreso",
+          overdue: "Atrasado",
+          pending: "Pendiente"
+        };
+        
+        // Calcular duración en días
+        const duration = !isMilestone 
+          ? Math.ceil((new Date(originalTask.end).getTime() - new Date(originalTask.start).getTime()) / (1000 * 60 * 60 * 24)) + 1
+          : 0;
+        
         return `
-          <div style="padding: 8px; min-width: 200px;">
-            <div style="font-weight: 600; margin-bottom: 6px;">${task.name}</div>
-            <div style="font-size: 12px; color: #586069;">
-              ${isMilestone ? "🔷 Milestone" : "📋 Tarea"}
+          <div class="tooltip-header">
+            ${isMilestone ? "🎯" : "📝"} ${task.name}
+          </div>
+          <div class="tooltip-body">
+            <div class="tooltip-row">
+              <span class="tooltip-label">Tipo:</span>
+              <span class="tooltip-value">${isMilestone ? "Milestone" : "Tarea"}</span>
             </div>
-            <div style="font-size: 12px; margin-top: 4px;">
-              <strong>Inicio:</strong> ${originalTask.start}
+            ${!isMilestone ? `
+              <div class="tooltip-row">
+                <span class="tooltip-label">Estado:</span>
+                <span class="tooltip-value">${statusIcons[taskStatus] || ""} ${statusLabels[taskStatus] || originalTask.status || "N/A"}</span>
+              </div>
+            ` : ""}
+            <div class="tooltip-row">
+              <span class="tooltip-label">Inicio:</span>
+              <span class="tooltip-value">${new Date(originalTask.start).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
             </div>
-            ${!isMilestone ? `<div style="font-size: 12px;"><strong>Fin:</strong> ${originalTask.end}</div>` : ""}
-            ${!isMilestone ? `<div style="font-size: 12px;"><strong>Progreso:</strong> ${Math.round(originalTask.progress)}%</div>` : ""}
-            ${originalTask.assignee ? `<div style="font-size: 12px;"><strong>Responsable:</strong> ${originalTask.assignee}</div>` : ""}
-            ${originalTask.status ? `<div style="font-size: 12px;"><strong>Estado:</strong> ${originalTask.status}</div>` : ""}
-            ${originalTask.dependencies.length > 0 ? `<div style="font-size: 12px;"><strong>Deps:</strong> ${originalTask.dependencies.join(", ")}</div>` : ""}
+            ${!isMilestone ? `
+              <div class="tooltip-row">
+                <span class="tooltip-label">Fin:</span>
+                <span class="tooltip-value">${new Date(originalTask.end).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+              </div>
+              <div class="tooltip-row">
+                <span class="tooltip-label">Duración:</span>
+                <span class="tooltip-value">${duration} día${duration !== 1 ? 's' : ''}</span>
+              </div>
+              <div class="tooltip-row">
+                <span class="tooltip-label">Progreso:</span>
+                <span class="tooltip-value">
+                  <div style="display: flex; align-items: center; gap: 6px;">
+                    <div style="flex: 1; height: 6px; background: #e1e4e8; border-radius: 3px; overflow: hidden;">
+                      <div style="height: 100%; background: ${originalTask.progress === 100 ? '#36b37e' : originalTask.progress > 50 ? '#4c9aff' : '#ffab00'}; width: ${originalTask.progress}%;"></div>
+                    </div>
+                    <span style="font-weight: 700; min-width: 35px;">${Math.round(originalTask.progress)}%</span>
+                  </div>
+                </span>
+              </div>
+            ` : ""}
+            ${originalTask.assignee ? `
+              <div class="tooltip-row">
+                <span class="tooltip-label">Responsable:</span>
+                <span class="tooltip-value">👤 ${originalTask.assignee}</span>
+              </div>
+            ` : ""}
+            ${originalTask.dependencies.length > 0 ? `
+              <div class="tooltip-row">
+                <span class="tooltip-label">Dependencias:</span>
+                <span class="tooltip-value">${originalTask.dependencies.join(", ")}</span>
+              </div>
+            ` : ""}
           </div>
         `;
       },
@@ -139,10 +204,66 @@ export function GanttView({
     });
 
     ganttInstanceRef.current = gantt;
-  }, [visibleTasks, viewMode, showCriticalPath, criticalIds, onTaskChange, onTaskClick]);
+  }, [visibleTasks, currentViewMode, showCriticalPath, criticalIds, onTaskChange, onTaskClick]);
+
+  // Sincronizar con prop externa
+  useEffect(() => {
+    setCurrentViewMode(viewMode);
+  }, [viewMode]);
+
+  const handleZoomIn = () => {
+    const currentIndex = VIEW_MODES.indexOf(currentViewMode);
+    if (currentIndex > 0) {
+      setCurrentViewMode(VIEW_MODES[currentIndex - 1]);
+    }
+  };
+
+  const handleZoomOut = () => {
+    const currentIndex = VIEW_MODES.indexOf(currentViewMode);
+    if (currentIndex < VIEW_MODES.length - 1) {
+      setCurrentViewMode(VIEW_MODES[currentIndex + 1]);
+    }
+  };
+
+  const handleFitView = () => {
+    // Intenta ajustar la vista automáticamente
+    if (ganttInstanceRef.current) {
+      ganttInstanceRef.current.refresh(visibleTasks);
+    }
+  };
 
   return (
-    <div style={{ padding: 16, overflow: "auto" }}>
+    <div style={{ padding: 16, overflow: "auto", position: "relative" }}>
+      {/* Controles de zoom - estilo GanttPRO */}
+      <div className="zoom-controls">
+        <button 
+          onClick={handleZoomIn}
+          disabled={currentViewMode === VIEW_MODES[0]}
+          title="Acercar"
+        >
+          +
+        </button>
+        <button 
+          onClick={handleZoomOut}
+          disabled={currentViewMode === VIEW_MODES[VIEW_MODES.length - 1]}
+          title="Alejar"
+        >
+          −
+        </button>
+        <div className="separator" />
+        <button 
+          onClick={handleFitView}
+          title="Ajustar vista"
+          style={{ fontSize: 14 }}
+        >
+          ⊡
+        </button>
+        <div className="separator" />
+        <span style={{ fontSize: 11, color: "var(--color-text-muted)", padding: "0 6px", fontWeight: 600 }}>
+          {VIEW_MODE_LABELS[currentViewMode]}
+        </span>
+      </div>
+
       {hasCycle && (
         <p style={{ color: "#d73a49", marginBottom: 12, fontSize: 14 }}>
           ⚠ Hay un ciclo en las dependencias (ruta crítica no disponible).

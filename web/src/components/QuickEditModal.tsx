@@ -42,6 +42,7 @@ export function QuickEditModal({ task, onSave, onClose }: Props) {
 
   return (
     <div
+      className="modal-overlay"
       style={{
         position: "fixed",
         inset: 0,
@@ -50,18 +51,22 @@ export function QuickEditModal({ task, onSave, onClose }: Props) {
         alignItems: "center",
         justifyContent: "center",
         zIndex: 2000,
+        animation: "fadeIn 0.2s ease",
       }}
       onClick={onClose}
     >
       <div
+        className="modal-content"
         style={{
-          background: "white",
-          borderRadius: 8,
+          background: "var(--color-surface)",
+          borderRadius: 12,
           padding: 24,
           minWidth: 500,
           maxWidth: 600,
           maxHeight: "80vh",
           overflow: "auto",
+          boxShadow: "0 8px 32px rgba(0, 0, 0, 0.18)",
+          animation: "slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
         }}
         onClick={(e) => e.stopPropagation()}
       >
