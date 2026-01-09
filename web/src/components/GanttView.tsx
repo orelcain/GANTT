@@ -12,6 +12,7 @@ type Props = {
   tasks: Task[];
   viewMode?: ViewMode;
   showCriticalPath?: boolean;
+  clampRange?: { start: string; end: string };
   onTaskChange?: (task: Task, changes: { start?: string; end?: string; progress?: number }) => void;
   onTaskClick?: (task: Task) => void;
 };
@@ -27,6 +28,7 @@ export function GanttView({
   tasks,
   viewMode = "Day",
   showCriticalPath = false,
+  clampRange,
   onTaskChange,
   onTaskClick,
 }: Props) {
@@ -65,9 +67,28 @@ export function GanttView({
     if (!containerRef.current) return;
     containerRef.current.innerHTML = "";
 
+    const clampStart = clampRange ? new Date(clampRange.start) : null;
+    const clampEnd = clampRange ? new Date(clampRange.end) : null;
+
     const data = visibleTasks.map((t) => {
       const isMilestone = t.type === "milestone";
       const taskStatus = getTaskStatus(t);
+
+      // Recortar rango visible para que fechas extremas no estiren el timeline.
+      let startStr = t.start;
+      let endStr = isMilestone ? t.start : t.end;
+
+      if (clampStart && clampEnd) {
+        const start = new Date(startStr);
+        const end = new Date(endStr);
+        if (!Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime())) {
+          const clampedStart = start < clampStart ? clampStart : start;
+          const clampedEnd = end > clampEnd ? clampEnd : end;
+          const safeEnd = clampedEnd < clampedStart ? clampedStart : clampedEnd;
+          startStr = clampedStart.toISOString().split("T")[0];
+          endStr = safeEnd.toISOString().split("T")[0];
+        }
+      }
 
       // frappe-gantt hace `element.classList.add(custom_class)`.
       // classList.add NO acepta tokens con espacios; por eso custom_class debe ser 1 solo token.
@@ -79,8 +100,8 @@ export function GanttView({
       return {
         id: t.id,
         name: t.name,
-        start: t.start,
-        end: isMilestone ? t.start : t.end, // Milestones duran 1 día
+        start: startStr,
+        end: endStr, // Milestones duran 1 día
         progress: isMilestone ? 100 : t.progress,
         dependencies: t.dependencies.join(","),
         custom_class: customClass,

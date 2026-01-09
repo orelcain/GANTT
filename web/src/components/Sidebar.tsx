@@ -80,7 +80,6 @@ export function Sidebar({
     const isKanban = view === "kanban";
     const isCalendar = view === "calendar";
     const isResources = view === "resources";
-
     const nextDashboard = isDashboard ? !showDashboard : false;
     const nextKanban = isKanban ? !showKanban : false;
     const nextCalendar = isCalendar ? !showCalendar : false;
@@ -128,7 +127,7 @@ export function Sidebar({
             onSheetTabChange("settings");
           }}
         >
-          ⚙️ Settings
+          ⚙️ Ajustes
         </button>
       </div>
 

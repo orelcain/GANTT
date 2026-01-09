@@ -16,6 +16,7 @@ import { CalendarView } from "./components/CalendarView";
 import { NotificationCenter } from "./components/NotificationCenter";
 import { SettingsView } from "./components/SettingsView";
 import type { SheetTab } from "./components/Toolbar";
+import { Splitter } from "./components/Splitter";
 import { useGanttStore } from "./lib/store";
 import type { Task, UserRole } from "./lib/types";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
@@ -177,11 +178,11 @@ export default function App() {
     setViewMode(recommended);
   }, [filteredTasks, hasTouchedViewMode, tasks.length]);
 
-  const { timelineTasks, timelineShownCount, timelineTotalCount } = useMemo(() => {
+  const { timelineTasks, timelineShownCount, timelineTotalCount, timelineClampRange } = useMemo(() => {
     const totalCount = filteredTasks.length;
 
     if (timelineRange === "todo") {
-      return { timelineTasks: filteredTasks, timelineShownCount: totalCount, timelineTotalCount: totalCount };
+      return { timelineTasks: filteredTasks, timelineShownCount: totalCount, timelineTotalCount: totalCount, timelineClampRange: undefined };
     }
 
     let minDate: Date | null = null;
@@ -197,7 +198,7 @@ export default function App() {
     }
 
     if (!minDate || !maxDate) {
-      return { timelineTasks: filteredTasks, timelineShownCount: totalCount, timelineTotalCount: totalCount };
+      return { timelineTasks: filteredTasks, timelineShownCount: totalCount, timelineTotalCount: totalCount, timelineClampRange: undefined };
     }
 
     const dayMs = 1000 * 60 * 60 * 24;
@@ -217,7 +218,7 @@ export default function App() {
 
     const months = monthsFromRange(timelineRange);
     if (months === 0) {
-      return { timelineTasks: filteredTasks, timelineShownCount: totalCount, timelineTotalCount: totalCount };
+      return { timelineTasks: filteredTasks, timelineShownCount: totalCount, timelineTotalCount: totalCount, timelineClampRange: undefined };
     }
 
     const today = new Date();
@@ -232,6 +233,11 @@ export default function App() {
     const windowStart = new Date(endAnchor);
     windowStart.setMonth(windowStart.getMonth() - months);
 
+    const clampRange = {
+      start: windowStart.toISOString().split("T")[0],
+      end: windowEnd.toISOString().split("T")[0],
+    };
+
     const withinWindow = filteredTasks.filter((t) => {
       const start = new Date(t.start);
       const end = new Date(t.type === "milestone" ? t.start : t.end);
@@ -241,10 +247,15 @@ export default function App() {
 
     // Si por el filtro quedan 0, no ocultar todo: vuelve a mostrar todo.
     if (withinWindow.length === 0) {
-      return { timelineTasks: filteredTasks, timelineShownCount: totalCount, timelineTotalCount: totalCount };
+      return { timelineTasks: filteredTasks, timelineShownCount: totalCount, timelineTotalCount: totalCount, timelineClampRange: undefined };
     }
 
-    return { timelineTasks: withinWindow, timelineShownCount: withinWindow.length, timelineTotalCount: totalCount };
+    return {
+      timelineTasks: withinWindow,
+      timelineShownCount: withinWindow.length,
+      timelineTotalCount: totalCount,
+      timelineClampRange: clampRange,
+    };
   }, [filteredTasks, timelineRange]);
 
   // Atajos de teclado
@@ -449,18 +460,34 @@ export default function App() {
               ) : sheetTab === "tareas" ? (
                 <TaskTable tasks={filteredTasks} canEdit={canEdit} />
               ) : (
-                <GanttView
-                  tasks={timelineTasks}
-                  viewMode={viewMode}
-                  showCriticalPath={showCriticalPath}
-                  onTaskChange={
-                    canEdit
-                      ? async (task, changes) => {
-                          await upsertTask({ ...task, ...changes });
-                        }
-                      : undefined
+                <Splitter
+                  storageKey="gantt-timeline-splitter"
+                  defaultSplitPosition={38}
+                  minLeftWidth={320}
+                  minRightWidth={520}
+                  leftPanel={
+                    <div style={{ height: "100%", overflow: "auto", background: "var(--color-surface)" }}>
+                      <TaskTable tasks={timelineTasks} canEdit={canEdit} />
+                    </div>
                   }
-                  onTaskClick={canEdit ? (task) => setTaskToEdit(task) : undefined}
+                  rightPanel={
+                    <div style={{ height: "100%", overflow: "hidden", background: "var(--color-surface)" }}>
+                      <GanttView
+                        tasks={timelineTasks}
+                        viewMode={viewMode}
+                        showCriticalPath={showCriticalPath}
+                        clampRange={timelineClampRange}
+                        onTaskChange={
+                          canEdit
+                            ? async (task, changes) => {
+                                await upsertTask({ ...task, ...changes });
+                              }
+                            : undefined
+                        }
+                        onTaskClick={canEdit ? (task) => setTaskToEdit(task) : undefined}
+                      />
+                    </div>
+                  }
                 />
               )}
             </div>
