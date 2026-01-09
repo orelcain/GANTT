@@ -36,22 +36,36 @@ export function GanttView({
 
   const { criticalIds, hasCycle } = useMemo(() => computeCriticalPath(visibleTasks), [visibleTasks]);
 
+  // Determinar estado de cada tarea para aplicar colores
+  const getTaskStatus = (task: Task): string => {
+    if (task.type === "milestone") return "milestone";
+    
+    const today = new Date().toISOString().split("T")[0];
+    const isOverdue = task.end < today && task.progress < 100;
+    
+    if (task.progress === 100) return "completed";
+    if (isOverdue) return "overdue";
+    if (task.progress > 0 && task.progress < 100) return "in-progress";
+    return "pending";
+  };
+
   useEffect(() => {
     if (!containerRef.current) return;
     containerRef.current.innerHTML = "";
 
     const data = visibleTasks.map((t) => {
       const isMilestone = t.type === "milestone";
-      let customClass = "";
+      const taskStatus = getTaskStatus(t);
+      let customClass = `task-${taskStatus}`;
       
       if (showCriticalPath && criticalIds.has(t.id)) {
-        customClass = "is-critical";
+        customClass += " is-critical";
       }
       if (isMilestone) {
-        customClass += (customClass ? " " : "") + "milestone";
+        customClass += " milestone";
       }
       if (t.color) {
-        customClass += (customClass ? " " : "") + "custom-color";
+        customClass += " custom-color";
       }
 
       return {

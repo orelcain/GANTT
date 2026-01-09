@@ -11,6 +11,39 @@ function parseDeps(raw: string): string[] {
     .filter(Boolean);
 }
 
+// Generar color único basado en el nombre
+function getAvatarColor(name: string): string {
+  const colors = [
+    "#0052cc", "#36b37e", "#6554c0", "#ff5630", "#ffab00",
+    "#00b8d9", "#ff8b00", "#ff5630", "#6554c0", "#00875a"
+  ];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length];
+}
+
+// Obtener iniciales del nombre
+function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+  return name.substring(0, 2).toUpperCase();
+}
+
+// Determinar estado de la tarea
+function getTaskStatus(task: Task): string {
+  if (task.type === "milestone") return "milestone";
+  const today = new Date().toISOString().split("T")[0];
+  const isOverdue = task.end < today && task.progress < 100;
+  if (task.progress === 100) return "completed";
+  if (isOverdue) return "overdue";
+  if (task.progress > 0) return "in-progress";
+  return "pending";
+}
+
 type SortField = "name" | "start" | "end" | "progress" | "status" | "assignee";
 type SortDirection = "asc" | "desc";
 
@@ -101,13 +134,20 @@ export function TaskTable({ tasks, canEdit }: { tasks: Task[]; canEdit: boolean 
             const level = t.level ?? 0;
             const isMilestone = t.type === "milestone";
             const hasChildren = tasksWithChildren.has(t.id);
-            const icon = isMilestone ? "◆" : "▪";
+            const taskStatus = getTaskStatus(t);
             
             return (
               <tr key={t.id}>
-                <td style={{ textAlign: "center", fontSize: 16 }}>
-                  <span title={isMilestone ? "Milestone" : "Tarea"}>
-                    {icon}
+                <td style={{ textAlign: "center", fontSize: 14 }}>
+                  <span 
+                    className="task-icon"
+                    title={isMilestone ? "Milestone" : "Tarea"}
+                    style={{
+                      background: isMilestone ? "#f0e7ff" : "#e3f2fd",
+                      color: isMilestone ? "#6554c0" : "#0052cc"
+                    }}
+                  >
+                    {isMilestone ? "🎯" : "📝"}
                   </span>
                 </td>
                 <td>
@@ -210,20 +250,31 @@ export function TaskTable({ tasks, canEdit }: { tasks: Task[]; canEdit: boolean 
                     style={{ width: 75, fontSize: 10, padding: "2px 4px" }}
                   />
                 ) : (
-                  <span
-                    style={{
-                      padding: "1px 6px",
-                      borderRadius: 3,
-                      fontSize: 10,
-                      background: "var(--color-bg)",
-                      border: "1px solid var(--color-border)",
-                    }}
-                  >
-                    {t.status || "—"}
+                  <span className={`status-badge ${taskStatus}`}>
+                    {taskStatus === "completed" && "✓ "}
+                    {taskStatus === "in-progress" && "⏳ "}
+                    {taskStatus === "overdue" && "⚠ "}
+                    {taskStatus === "pending" && "○ "}
+                    {t.status || taskStatus}
                   </span>
                 )}
               </td>
-              <td style={{ fontSize: 10 }}>{t.assignee ?? "—"}</td>
+              <td>
+                {t.assignee ? (
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <span 
+                      className="avatar" 
+                      style={{ background: getAvatarColor(t.assignee) }}
+                      title={t.assignee}
+                    >
+                      {getInitials(t.assignee)}
+                    </span>
+                    <span style={{ fontSize: 11 }}>{t.assignee}</span>
+                  </div>
+                ) : (
+                  <span style={{ fontSize: 10, color: "var(--color-text-muted)" }}>—</span>
+                )}
+              </td>
               <td>
                 {canEdit ? (
                   <input

@@ -305,12 +305,94 @@ table td {
 }
 
 table tbody tr:hover {
-  background: var(--color-bg);
-  transition: background 0.15s ease;
+  background: rgba(76, 154, 255, 0.04);
+  transition: background 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
 }
 
 table tbody tr {
-  transition: background 0.15s ease;
+  transition: background 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Badges coloridos para estados - estilo GanttPRO */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  border: none;
+}
+
+.status-badge.completed {
+  background: #e3fcef;
+  color: #006644;
+}
+
+.status-badge.in-progress {
+  background: #fff4e6;
+  color: #974f0c;
+}
+
+.status-badge.pending {
+  background: #deebff;
+  color: #0747a6;
+}
+
+.status-badge.overdue {
+  background: #ffebe6;
+  color: #bf2600;
+}
+
+body.dark-mode .status-badge.completed {
+  background: rgba(54, 179, 126, 0.2);
+  color: #3fb950;
+}
+
+body.dark-mode .status-badge.in-progress {
+  background: rgba(255, 171, 0, 0.2);
+  color: #d29922;
+}
+
+body.dark-mode .status-badge.pending {
+  background: rgba(88, 166, 255, 0.2);
+  color: #58a6ff;
+}
+
+body.dark-mode .status-badge.overdue {
+  background: rgba(248, 81, 73, 0.2);
+  color: #f85149;
+}
+
+/* Avatar circular - estilo GanttPRO */
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 600;
+  color: white;
+  text-transform: uppercase;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+/* Iconos de tipo de tarea mejorados */
+.task-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  font-size: 12px;
 }
 
 input, select, button {
@@ -389,19 +471,57 @@ button.danger:hover:not(:disabled) {
   color: white;
 }
 
+/* Colores dinámicos por estado de tarea - estilo GanttPRO */
+.task-completed .bar {
+  fill: #36b37e !important;
+  stroke: #2a9d68 !important;
+  stroke-width: 1.5;
+  filter: drop-shadow(0 2px 4px rgba(54, 179, 126, 0.3));
+}
+
+.task-in-progress .bar {
+  fill: #ffab00 !important;
+  stroke: #e09600 !important;
+  stroke-width: 1.5;
+  filter: drop-shadow(0 2px 4px rgba(255, 171, 0, 0.3));
+}
+
+.task-pending .bar {
+  fill: #4c9aff !important;
+  stroke: #0052cc !important;
+  stroke-width: 1.5;
+  filter: drop-shadow(0 2px 4px rgba(76, 154, 255, 0.3));
+}
+
+.task-overdue .bar {
+  fill: #de350b !important;
+  stroke: #bf2600 !important;
+  stroke-width: 1.5;
+  filter: drop-shadow(0 2px 4px rgba(222, 53, 11, 0.3));
+  animation: pulse-overdue 2s ease-in-out infinite;
+}
+
+@keyframes pulse-overdue {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
 .is-critical .bar {
   stroke: var(--color-critical) !important;
   stroke-width: 3px;
-  fill: var(--color-critical) !important;
-  opacity: 0.9;
+  filter: drop-shadow(0 3px 6px rgba(255, 86, 48, 0.4));
 }
 
-/* Milestones como diamantes */
+/* Milestones como diamantes - estilo GanttPRO */
 .milestone .bar {
   transform: rotate(45deg);
   transform-origin: center;
-  rx: 0 !important;
-  ry: 0 !important;
+  rx: 2 !important;
+  ry: 2 !important;
+  fill: #6554c0 !important;
+  stroke: #5243aa !important;
+  stroke-width: 2;
+  filter: drop-shadow(0 2px 5px rgba(101, 84, 192, 0.4));
 }
 
 .milestone .bar-progress {
@@ -411,6 +531,7 @@ button.danger:hover:not(:disabled) {
 .milestone .bar-label {
   transform: rotate(-45deg);
   font-size: 11px;
+  font-weight: 600;
 }
 
 /* Colores personalizados */
@@ -473,31 +594,63 @@ body.dark-mode .gantt-container .grid-background {
   stroke-width: 0.4;
 }
 
-.gantt-container .today-highlight {
-  fill: #fff4e6;
-  opacity: 0.5;
+/* Destacar fin de semana - estilo GanttPRO */
+.gantt-container .tick.weekend {
+  fill: rgba(0, 0, 0, 0.03);
+  stroke: var(--color-border-light);
 }
 
-/* Barras del Gantt */
-.gantt-container .bar {
-  fill: #4c9aff;
-  stroke: #0052cc;
-  stroke-width: 1;
-  rx: 3;
-  ry: 3;
+body.dark-mode .gantt-container .tick.weekend {
+  fill: rgba(255, 255, 255, 0.02);
+}
+
+/* Marcador de HOY más prominente - estilo GanttPRO */
+.gantt-container .today-highlight {
+  fill: #ff5630;
+  opacity: 0.08;
+  stroke: #ff5630;
+  stroke-width: 2;
+  stroke-dasharray: 4, 4;
+}
+
+.gantt-container .today-marker {
+  stroke: #ff5630;
+  stroke-width: 3;
   opacity: 0.9;
-  transition: all 0.2s ease;
+  filter: drop-shadow(0 0 4px rgba(255, 86, 48, 0.5));
+}
+
+.gantt-container .today-label {
+  fill: #ff5630;
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Barras del Gantt con estilo GanttPRO */
+.gantt-container .bar {
+  fill: url(#barGradientBlue);
+  stroke: #0052cc;
+  stroke-width: 1.5;
+  rx: 8;
+  ry: 8;
+  opacity: 1;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .gantt-container .bar:hover {
-  opacity: 1;
   stroke-width: 2;
-  filter: brightness(1.1);
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.25)) brightness(1.05);
+  transform: translateY(-1px);
 }
 
 .gantt-container .bar-progress {
-  fill: #0052cc;
-  opacity: 0.6;
+  fill: rgba(0, 82, 204, 0.35);
+  opacity: 1;
+  rx: 8;
+  ry: 8;
 }
 
 .gantt-container .bar-label {
@@ -519,15 +672,28 @@ body.dark-mode .gantt-container .grid-background {
   text-anchor: middle;
 }
 
-/* Dependencias */
+/* Dependencias con mejor visibilidad */
 .gantt-container .arrow {
-  stroke: #8993a4;
-  stroke-width: 1.5;
+  stroke: #5e6c84;
+  stroke-width: 2;
   fill: none;
+  opacity: 0.7;
+  transition: all 0.2s ease;
+}
+
+.gantt-container .arrow:hover {
+  stroke: var(--color-primary);
+  stroke-width: 2.5;
+  opacity: 1;
 }
 
 .gantt-container .arrow-head {
-  fill: #8993a4;
+  fill: #5e6c84;
+  transition: all 0.2s ease;
+}
+
+.gantt-container .arrow:hover .arrow-head {
+  fill: var(--color-primary);
 }
 
 /* Headers del Gantt */
